@@ -1,0 +1,1927 @@
+<!doctype html>
+<html lang="th">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>FLUKE // JARVIS</title>
+
+<style>
+*{box-sizing:border-box}
+html,body{
+ margin:0;
+ height:100%;
+ overflow:hidden;
+ background:#020711;
+ color:#eaf6ff;
+ font:12px Arial
+}
+body{
+ display:flex;
+ flex-direction:column
+}
+header{
+ height:54px;
+ flex:none;
+ padding:0 12px;
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ background:#030c19;
+ border-bottom:1px solid #17405e
+}
+.logo{
+ font-weight:900;
+ letter-spacing:2px
+}
+.logo small{
+ display:block;
+ color:#67d8ff;
+ font:8px monospace
+}
+.status{
+ font:9px monospace
+}
+.ok{
+ color:#71ffad
+}
+.err{
+ color:#ff6578
+}
+main{
+ position:relative;
+ flex:1;
+ min-height:0;
+ background:#000;
+ overflow:hidden
+}
+video,canvas{
+ position:absolute;
+ inset:0;
+ width:100%;
+ height:100%;
+ object-fit:cover
+}
+video.mirror{
+ transform:scaleX(-1)
+}
+canvas{
+ pointer-events:none
+}
+.hud{
+ position:absolute;
+ top:9px;
+ left:9px;
+ right:9px;
+ display:flex;
+ justify-content:space-between;
+ z-index:4;
+ pointer-events:none
+}
+.chip,.panel,.msg{
+ background:#020b15dc;
+ border:1px solid #285878;
+ border-radius:8px
+}
+.chip{
+ padding:6px 8px;
+ color:#86dcff;
+ font:8px monospace
+}
+.monitor{
+ position:absolute;
+ top:40px;
+ right:9px;
+ width:190px;
+ padding:8px;
+ z-index:5;
+ background:#020b15d9;
+ border:1px solid #285878;
+ border-radius:9px;
+ font:8px monospace
+}
+.r{
+ display:flex;
+ justify-content:space-between;
+ margin:3px 0
+}
+.r span:first-child{
+ color:#7895a7
+}
+.controls{
+ position:absolute;
+ bottom:9px;
+ left:50%;
+ transform:translateX(-50%);
+ display:flex;
+ gap:5px;
+ z-index:6
+}
+button{
+ border:1px solid #285878;
+ background:#061626e8;
+ color:#e4f7ff;
+ border-radius:8px;
+ padding:8px 10px;
+ font-size:9px;
+ font-weight:800
+}
+button.active,button.primary{
+ border-color:#58d5ff;
+ color:#7de0ff
+}
+.upgrade{
+ position:absolute;
+ left:9px;
+ bottom:56px;
+ width:245px;
+ max-height:46vh;
+ overflow:auto;
+ padding:8px;
+ z-index:5;
+ background:#020b15e8;
+ border:1px solid #285878;
+ border-radius:9px;
+ font:8px monospace
+}
+.m{
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:4px
+}
+.m button{
+ padding:6px 3px;
+ font-size:8px
+}
+.auto{
+ margin-top:6px;
+ color:#71ffad
+}
+.slider{
+ display:flex;
+ gap:5px;
+ align-items:center;
+ margin:6px 0
+}
+.slider input{
+ width:100%
+}
+.scene,.history{
+ border-top:1px solid #244254;
+ margin-top:6px;
+ padding-top:6px;
+ line-height:1.45
+}
+.history{
+ max-height:85px;
+ overflow:auto
+}
+.msg{
+ display:none;
+ position:absolute;
+ left:50%;
+ top:18%;
+ transform:translateX(-50%);
+ width:88%;
+ padding:10px;
+ text-align:center;
+ z-index:10
+}
+.msg.show{
+ display:block
+}
+.bottom{
+ height:60px;
+ flex:none;
+ display:flex;
+ gap:5px;
+ padding:7px;
+ background:#030b17;
+ border-top:1px solid #163452
+}
+.bottom input{
+ flex:1;
+ min-width:0;
+ border:1px solid #285878;
+ border-radius:8px;
+ background:#061626;
+ color:#fff;
+ padding:0 9px;
+ font-size:16px
+}
+@media(max-width:600px){
+ .monitor{width:175px}
+ .upgrade{width:210px}
+}
+</style>
+
+<header>
+ <div class="logo">
+  FLUKE // JARVIS
+  <small>LOCAL COMPUTER VISION</small>
+ </div>
+ <div id="status" class="status">● STARTING</div>
+</header>
+
+<main>
+ <video id="v" autoplay playsinline muted></video>
+ <canvas id="c"></canvas>
+
+ <div class="hud">
+  <span class="chip">OBJECT AI</span>
+  <span class="chip" id="model">YOLO26n · ONNX</span>
+ </div>
+
+ <div class="monitor">
+  <b>JARVIS MONITOR</b>
+
+  <div class="r">
+   <span>TIME</span>
+   <span id="time">--:--:--</span>
+  </div>
+
+  <div class="r">
+   <span>CAMERA</span>
+   <span id="cam">---</span>
+  </div>
+
+  <div class="r">
+   <span>RES</span>
+   <span id="res">---</span>
+  </div>
+
+  <div class="r">
+   <span>OBJECT FPS</span>
+   <span id="ofps">0</span>
+  </div>
+
+  <div class="r">
+   <span>HAND FPS</span>
+   <span id="hfps">0</span>
+  </div>
+
+  <div class="r">
+   <span>OBJECTS</span>
+   <span id="cnt">0</span>
+  </div>
+
+  <div class="r">
+   <span>REMEMBERED</span>
+   <span id="seen">0</span>
+  </div>
+
+  <div class="r">
+   <span>HANDS</span>
+   <span id="hcnt">0</span>
+  </div>
+
+  <div class="r">
+   <span>HAND STATUS</span>
+   <span id="gest">NONE</span>
+  </div>
+ </div>
+
+ <div class="upgrade">
+  <b>JARVIS AI CONTROL</b>
+
+  <div style="margin-top:3px;color:#7895a7">
+   เปิดแล้วใช้งานได้เลย • AI สแกนอัตโนมัติ • มือ: ตรวจจับอย่างเดียว • เจอซ้ำไม่พูดซ้ำ
+  </div>
+
+  <div class="m">
+   <button id="sceneBtn">🔎 วิเคราะห์ฉาก</button>
+   <button id="clearBtn">🧹 ล้างประวัติ</button>
+   <button id="lockBtn">🔒 ล็อกเป้าหมาย</button>
+  </div>
+
+  <div class="auto">
+   ● AUTO SCAN <b>เปิดอยู่</b>
+  </div>
+
+  <div class="slider">
+   CONF
+   <input id="conf" type="range" min="20" max="90" step="5" value="35">
+   <span id="cv">35%</span>
+  </div>
+
+  <div id="scene" class="scene">
+   ฉาก: กำลังรอการตรวจจับ...
+  </div>
+
+  <div id="history" class="history">
+   ยังไม่มีประวัติ
+  </div>
+
+  <div id="objs" class="history"></div>
+ </div>
+
+ <div id="msg" class="msg"></div>
+
+ <div class="controls">
+  <button id="sw">🔄 กล้อง</button>
+  <button id="mir">🪞 สะท้อน</button>
+  <button id="scan" class="primary">● สแกนตอนนี้</button>
+ </div>
+</main>
+
+<div class="bottom">
+ <input id="input" placeholder="พิมพ์ถาม JARVIS..." autocomplete="off">
+ <button id="send" class="primary">ส่ง</button>
+ <button id="mic">🎤</button>
+</div>
+
+<script src="./ort/ort.min.js"></script>
+
+<script type="module">
+
+const $=x=>document.getElementById(x);
+
+const v=$("v");
+const c=$("c");
+const x=c.getContext("2d");
+
+const labels=[
+"person","bicycle","car","motorcycle","airplane","bus","train","truck",
+"boat","traffic light","fire hydrant","stop sign","parking meter","bench",
+"bird","cat","dog","horse","sheep","cow","elephant","bear","zebra","giraffe",
+"backpack","umbrella","handbag","tie","suitcase","frisbee","skis",
+"snowboard","sports ball","kite","baseball bat","baseball glove","skateboard",
+"surfboard","tennis racket","bottle","wine glass","cup","fork","knife",
+"spoon","bowl","banana","apple","sandwich","orange","broccoli","carrot",
+"hot dog","pizza","donut","cake","chair","couch","potted plant","bed",
+"dining table","toilet","tv","laptop","mouse","remote","keyboard",
+"cell phone","microwave","oven","toaster","sink","refrigerator","book",
+"clock","vase","scissors","teddy bear","hair drier","toothbrush"
+];
+
+const thai={
+ person:"คน",
+ bicycle:"จักรยาน",
+ car:"รถยนต์",
+ motorcycle:"มอเตอร์ไซค์",
+ airplane:"เครื่องบิน",
+ bus:"รถบัส",
+ train:"รถไฟ",
+ truck:"รถบรรทุก",
+ boat:"เรือ",
+ bird:"นก",
+ cat:"แมว",
+ dog:"สุนัข",
+ horse:"ม้า",
+ bottle:"ขวด",
+ cup:"ถ้วย",
+ chair:"เก้าอี้",
+ couch:"โซฟา",
+ laptop:"แล็ปท็อป",
+ "cell phone":"โทรศัพท์มือถือ",
+ book:"หนังสือ",
+ clock:"นาฬิกา",
+ tv:"ทีวี",
+ keyboard:"คีย์บอร์ด",
+ mouse:"เมาส์"
+};
+
+let session;
+let hand=null;
+let stream;
+let face="environment";
+let mirror=false;
+let thr=.35;
+
+let objs=[];
+let hands=[];
+let tracks=[];
+let next=1;
+let target=null;
+
+let hist=[];
+let seenLabels=new Set();
+
+let stableHands=0;
+let handSeenFrames=0;
+let handMissFrames=0;
+let handNotice=false;
+
+let busy=0;
+let hbusy=0;
+
+let last=0;
+let hlast=0;
+
+let of=0;
+let hf=0;
+
+let ot=performance.now();
+let ht=ot;
+
+let scale=1;
+let ox=0;
+let oy=0;
+
+let scanAt=0;
+
+
+const msg=(s,t=3500)=>{
+ $("msg").innerHTML=s;
+ $("msg").classList.add("show");
+ clearTimeout(msg.t);
+ msg.t=setTimeout(
+  ()=>$("msg").classList.remove("show"),
+  t
+ );
+};
+
+
+const esc=s=>
+ String(s)
+ .replaceAll("&","&amp;")
+ .replaceAll("<","&lt;")
+ .replaceAll(">","&gt;")
+ .replaceAll('"',"&quot;")
+ .replaceAll("'","&#039;");
+
+
+const txt=(i,s)=>
+ $(i).textContent=s;
+
+
+async function buf(url,p){
+
+ let r=await fetch(url);
+
+ if(!r.ok)
+  throw Error("HTTP "+r.status);
+
+ if(!r.body){
+  p?.(100);
+  return r.arrayBuffer();
+ }
+
+ let q=r.body.getReader();
+ let a=[];
+ let n=0;
+ let total=+r.headers.get("content-length")||0;
+
+ for(;;){
+
+  let z=await q.read();
+
+  if(z.done)
+   break;
+
+  a.push(z.value);
+  n+=z.value.length;
+
+  if(total)
+   p?.(Math.round(n/total*100));
+ }
+
+ let b=new Uint8Array(n);
+ let o=0;
+
+ for(let z of a){
+  b.set(z,o);
+  o+=z.length;
+ }
+
+ return b.buffer;
+}
+
+
+function reset(){
+
+ tracks=[];
+ next=1;
+ target=null;
+ hist=[];
+ seenLabels.clear();
+
+ stableHands=0;
+ handSeenFrames=0;
+ handMissFrames=0;
+ handNotice=false;
+
+ renderHist();
+
+ $("lockBtn").textContent="🔒 ล็อกเป้าหมาย";
+ $("lockBtn").classList.remove("active");
+
+ txt("seen",0);
+ txt("hcnt",0);
+ txt("gest","NONE");
+
+ targetBox();
+}
+
+
+async function camera(){
+
+ try{
+
+  reset();
+
+  stream?.getTracks().forEach(
+   t=>t.stop()
+  );
+
+  stream=await navigator.mediaDevices.getUserMedia({
+   video:{
+    facingMode:{ideal:face},
+    width:{ideal:1280},
+    height:{ideal:720},
+    frameRate:{ideal:30,max:30}
+   },
+   audio:false
+  });
+
+  v.srcObject=stream;
+
+  await v.play();
+
+  resize();
+
+  let s=stream.getVideoTracks()[0].getSettings();
+
+  txt(
+   "cam",
+   s.facingMode==="user"?"FRONT":"BACK"
+  );
+
+  txt(
+   "res",
+   `${s.width||v.videoWidth}×${s.height||v.videoHeight}`
+  );
+
+  $("status").textContent="● CAMERA READY";
+  $("status").className="status ok";
+
+ }catch(e){
+
+  $("status").textContent="● CAMERA ERROR";
+  $("status").className="status err";
+
+  msg(
+   "เปิดกล้องไม่ได้<br><br>"+esc(e.message)
+  );
+ }
+}
+
+
+function resize(){
+
+ if(v.videoWidth){
+  c.width=v.videoWidth;
+  c.height=v.videoHeight;
+  draw();
+ }
+}
+
+
+function tensor(){
+
+ let w=v.videoWidth;
+ let h=v.videoHeight;
+
+ scale=Math.min(640/w,640/h);
+
+ ox=(640-w*scale)/2;
+ oy=(640-h*scale)/2;
+
+ let z=document.createElement("canvas");
+
+ z.width=z.height=640;
+
+ let q=z.getContext(
+  "2d",
+  {willReadFrequently:true}
+ );
+
+ q.fillStyle="rgb(114,114,114)";
+ q.fillRect(0,0,640,640);
+
+ q.drawImage(
+  v,
+  ox,
+  oy,
+  w*scale,
+  h*scale
+ );
+
+ let d=q.getImageData(
+  0,0,640,640
+ ).data;
+
+ let a=409600;
+
+ let f=new Float32Array(a*3);
+
+ for(let i=0;i<a;i++){
+
+  let k=i*4;
+
+  f[i]=d[k]/255;
+  f[a+i]=d[k+1]/255;
+  f[a*2+i]=d[k+2]/255;
+ }
+
+ return new ort.Tensor(
+  "float32",
+  f,
+  [1,3,640,640]
+ );
+}
+
+
+function add(a,x1,y1,x2,y2,s,id){
+
+ s=+s;
+ id=Math.trunc(+id);
+
+ if(
+  !Number.isFinite(s) ||
+  s<thr ||
+  id<0 ||
+  id>=labels.length
+ )
+  return;
+
+ let m=Math.max(
+  Math.abs(x1),
+  Math.abs(y1),
+  Math.abs(x2),
+  Math.abs(y2)
+ );
+
+ if(m<=2)
+  [x1,y1,x2,y2]=[
+   x1*640,
+   y1*640,
+   x2*640,
+   y2*640
+  ];
+
+ [x1,y1,x2,y2]=[
+  x1,y1,x2,y2
+ ].map(Number);
+
+ x1=Math.max(0,Math.min(640,x1));
+ y1=Math.max(0,Math.min(640,y1));
+ x2=Math.max(0,Math.min(640,x2));
+ y2=Math.max(0,Math.min(640,y2));
+
+ if(x2>x1&&y2>y1){
+
+  a.push({
+   x1,
+   y1,
+   x2,
+   y2,
+   confidence:s,
+   classId:id,
+   label:labels[id]
+  });
+ }
+}
+
+
+function iou(a,b){
+
+ let w=Math.max(
+  0,
+  Math.min(a.x2,b.x2)-
+  Math.max(a.x1,b.x1)
+ );
+
+ let h=Math.max(
+  0,
+  Math.min(a.y2,b.y2)-
+  Math.max(a.y1,b.y1)
+ );
+
+ let z=w*h;
+
+ let A=
+  (a.x2-a.x1)*
+  (a.y2-a.y1);
+
+ let B=
+  (b.x2-b.x1)*
+  (b.y2-b.y1);
+
+ return z/(A+B-z+1e-6);
+}
+
+
+function parse(o){
+
+ if(!o?.data||o.dims?.length!==3)
+  return[];
+
+ let d=o.data;
+ let a=o.dims[1];
+ let b=o.dims[2];
+
+ let r=[];
+
+ if(b===6){
+
+  for(let i=0;i<a;i++){
+
+   let k=i*6;
+
+   add(
+    r,
+    d[k],
+    d[k+1],
+    d[k+2],
+    d[k+3],
+    d[k+4],
+    d[k+5]
+   );
+  }
+
+ }else if(a===6){
+
+  for(let i=0;i<b;i++)
+
+   add(
+    r,
+    d[i],
+    d[b+i],
+    d[b*2+i],
+    d[b*3+i],
+    d[b*4+i],
+    d[b*5+i]
+   );
+
+ }else if(a===84){
+
+  for(let i=0;i<b;i++){
+
+   let s=-1;
+   let m=-1;
+
+   for(let j=0;j<80;j++){
+
+    let q=+d[(j+4)*b+i];
+
+    if(q>m){
+     m=q;
+     s=j;
+    }
+   }
+
+   let X=+d[i];
+   let Y=+d[b+i];
+   let W=+d[2*b+i];
+   let H=+d[3*b+i];
+
+   add(
+    r,
+    X-W/2,
+    Y-H/2,
+    X+W/2,
+    Y+H/2,
+    m,
+    s
+   );
+  }
+
+ }else if(b===84){
+
+  for(let i=0;i<a;i++){
+
+   let k=i*84;
+
+   let s=-1;
+   let m=-1;
+
+   for(let j=0;j<80;j++){
+
+    let q=+d[k+4+j];
+
+    if(q>m){
+     m=q;
+     s=j;
+    }
+   }
+
+   let X=+d[k];
+   let Y=+d[k+1];
+   let W=+d[k+2];
+   let H=+d[k+3];
+
+   add(
+    r,
+    X-W/2,
+    Y-H/2,
+    X+W/2,
+    Y+H/2,
+    m,
+    s
+   );
+  }
+ }
+
+ r.sort(
+  (a,b)=>
+   b.confidence-a.confidence
+ );
+
+ let n=[];
+
+ for(let z of r){
+
+  if(
+   n.some(
+    q=>
+     q.classId===z.classId &&
+     iou(q,z)>.45
+   )
+  )
+   continue;
+
+  n.push(z);
+
+  if(n.length>=40)
+   break;
+ }
+
+ return n;
+}
+
+
+async function detect(){
+
+ let r=await session.run({
+  [session.inputNames[0]]:tensor()
+ });
+
+ return parse(
+  r[session.outputNames[0]]
+ );
+}
+
+
+function map(a,b){
+
+ return{
+  x:(a-ox)/scale,
+  y:(b-oy)/scale
+ };
+}
+
+
+function track(raw){
+
+ let now=performance.now();
+
+ let used=new Set();
+ let out=[];
+
+ for(let o of raw){
+
+  let best=null;
+  let bs=0;
+
+  for(let t of tracks){
+
+   if(
+    used.has(t.id)||
+    t.label!==o.label
+   )
+    continue;
+
+   let s=iou(t,o);
+
+   if(s>bs){
+    bs=s;
+    best=t;
+   }
+  }
+
+  if(best){
+
+   Object.assign(
+    best,
+    o,
+    {
+     lastSeen:now,
+     missed:0
+    }
+   );
+
+   used.add(best.id);
+
+   out.push({
+    ...o,
+    id:best.id
+   });
+
+  }else{
+
+   let t={
+    ...o,
+    id:next++,
+    lastSeen:now,
+    missed:0
+   };
+
+   tracks.push(t);
+
+   used.add(t.id);
+
+   out.push(t);
+
+   hist.unshift({
+    time:new Date().toLocaleTimeString(
+     "th-TH",
+     {hour12:false}
+    ),
+    label:t.label,
+    id:t.id,
+    confidence:t.confidence
+   });
+
+   hist=hist.slice(0,30);
+
+   /*
+    * จำประเภทวัตถุไว้แล้ว
+    * ดังนั้นหันกลับมาเจอชนิดเดิมจะไม่พูดซ้ำ
+    */
+   if(!seenLabels.has(t.label)){
+
+    seenLabels.add(t.label);
+
+    speak(
+     t.label,
+     t.id
+    );
+   }
+  }
+ }
+
+ for(let t of tracks){
+
+  if(!used.has(t.id))
+   t.missed++;
+ }
+
+ tracks=tracks.filter(
+  t=>t.missed<5
+ );
+
+ return out.sort(
+  (a,b)=>
+   b.confidence-a.confidence
+ );
+}
+
+
+function update(raw){
+
+ objs=track(raw||[]);
+
+ txt(
+  "cnt",
+  objs.length
+ );
+
+ txt(
+  "seen",
+  seenLabels.size
+ );
+
+ $("objs").innerHTML=
+  objs
+   .slice(0,8)
+   .map(
+    o=>
+     `<div class="r">
+      <span>
+       #${o.id}
+       ${esc(thai[o.label]||o.label)}
+      </span>
+      <span>
+       ${Math.round(o.confidence*100)}%
+      </span>
+     </div>`
+   )
+   .join("")
+  ||
+  "No objects detected";
+
+ renderHist();
+
+ targetBox();
+}
+
+
+function renderHist(){
+
+ $("history").innerHTML=
+  hist
+   .slice(0,12)
+   .map(
+    h=>
+     `<div>
+      [${h.time}]
+      #${h.id}
+      ${esc(thai[h.label]||h.label)}
+      ${Math.round(h.confidence*100)}%
+     </div>`
+   )
+   .join("")
+  ||
+  "ยังไม่มีประวัติ";
+}
+
+
+function speak(l,id){
+
+ if(!window.speechSynthesis)
+  return;
+
+ let k=l+id;
+ let n=Date.now();
+
+ if(
+  k===speak.k &&
+  n-speak.t<5000
+ )
+  return;
+
+ speak.k=k;
+ speak.t=n;
+
+ speechSynthesis.cancel();
+
+ let u=
+  new SpeechSynthesisUtterance(
+   `ตรวจพบ ${thai[l]||l}`
+  );
+
+ u.lang="th-TH";
+
+ speechSynthesis.speak(u);
+}
+
+
+function targetBox(){
+
+ if(target==null){
+
+  $("lockBtn").classList.remove("active");
+
+  return;
+ }
+
+ let o=
+  objs.find(
+   q=>q.id===target
+  );
+
+ if(!o){
+
+  $("lockBtn").classList.remove("active");
+
+  return;
+ }
+
+ let a=map(o.x1,o.y1);
+ let b=map(o.x2,o.y2);
+
+ let px=(a.x+b.x)/2;
+
+ if(mirror)
+  px=c.width-px;
+
+ $("lockBtn").classList.add("active");
+
+ msg.targetX=
+  px/c.width*100;
+
+ msg.targetY=
+  (a.y+b.y)/c.height*100;
+}
+
+
+/*
+ * วาดเฉพาะกรอบ Object AI
+ * ไม่มีการวาดจุดหรือเส้นของมือ
+ */
+function draw(){
+
+ if(!c.width)
+  return;
+
+ x.clearRect(
+  0,
+  0,
+  c.width,
+  c.height
+ );
+
+ for(let o of objs){
+
+  let a=map(
+   o.x1,
+   o.y1
+  );
+
+  let b=map(
+   o.x2,
+   o.y2
+  );
+
+  let x1=a.x;
+  let x2=b.x;
+
+  if(mirror){
+
+   let q=x1;
+
+   x1=c.width-x2;
+   x2=c.width-q;
+  }
+
+  x.strokeStyle=
+   o.id===target
+    ? "#ffdc72"
+    : "#55d5ff";
+
+  x.lineWidth=2;
+
+  x.strokeRect(
+   x1,
+   a.y,
+   x2-x1,
+   b.y-a.y
+  );
+
+  let s=
+   `#${o.id} ${
+    thai[o.label]||o.label
+   } ${
+    Math.round(o.confidence*100)
+   }%`;
+
+  x.font="bold 12px Arial";
+
+  x.fillStyle="#020b15e8";
+
+  x.fillRect(
+   x1,
+   Math.max(0,a.y-19),
+   x.measureText(s).width+8,
+   19
+  );
+
+  x.fillStyle="#fff";
+
+  x.fillText(
+   s,
+   x1+4,
+   Math.max(14,a.y-5)
+  );
+ }
+}
+
+
+/*
+ * Hand Detection UI
+ *
+ * สำคัญ:
+ * - ไม่แสดง landmark
+ * - ไม่แสดง skeleton
+ * - ไม่คำนวณ gesture
+ * - ใช้ temporal hysteresis ลดการกระพริบ
+ */
+function handsUI(){
+
+ const raw=hands.length;
+
+ if(raw>0){
+
+  handSeenFrames++;
+  handMissFrames=0;
+
+ }else{
+
+  handMissFrames++;
+  handSeenFrames=0;
+ }
+
+
+ /*
+  * ต้องเห็นอย่างน้อย 2 เฟรมก่อนยืนยัน
+  * ป้องกัน false detection ชั่วคราว
+  */
+ if(
+  raw>0 &&
+  stableHands===0 &&
+  handSeenFrames>=2
+ ){
+
+  stableHands=
+   Math.min(2,raw);
+
+  if(!handNotice){
+
+   msg(
+    "✋ ตรวจจับมือได้แล้ว",
+    1800
+   );
+
+   handNotice=true;
+  }
+
+ }else if(
+  raw>0 &&
+  stableHands>0
+ ){
+
+  /*
+   * อัปเดตจำนวนมืออย่างนุ่มนวล
+   */
+  stableHands=
+   Math.min(2,raw);
+
+ }else if(
+  raw===0 &&
+  stableHands>0 &&
+  handMissFrames>=5
+ ){
+
+  /*
+   * ต้องหายไป 5 เฟรมก่อนถือว่าไม่มีมือ
+   * ช่วยลดอาการกระพริบเวลา detection สะดุด
+   */
+  stableHands=0;
+  handNotice=false;
+ }
+
+ txt(
+  "hcnt",
+  stableHands
+ );
+
+ txt(
+  "gest",
+  stableHands>0
+   ? "HAND DETECTED"
+   : "NONE"
+ );
+}
+
+
+async function loop(n){
+
+ requestAnimationFrame(loop);
+
+ if(
+  !session||
+  busy||
+  !v.videoWidth||
+  n-last<180
+ )
+  return;
+
+ last=n;
+ busy=1;
+
+ try{
+
+  update(
+   await detect()
+  );
+
+  draw();
+  handsUI();
+
+  of++;
+
+  let e=
+   performance.now()-ot;
+
+  if(e>1000){
+
+   txt(
+    "ofps",
+    (of*1000/e).toFixed(1)
+   );
+
+   of=0;
+   ot=performance.now();
+  }
+
+  /*
+   * วิเคราะห์ฉากอัตโนมัติทุก 10 วินาที
+   */
+  if(
+   Date.now()-scanAt>10000
+  ){
+
+   scene();
+
+   scanAt=Date.now();
+  }
+
+ }catch(e){
+
+  console.warn(e);
+
+ }finally{
+
+  busy=0;
+ }
+}
+
+
+async function handLoop(n){
+
+ requestAnimationFrame(
+  handLoop
+ );
+
+ if(
+  !hand||
+  hbusy||
+  !v.videoWidth||
+  n-hlast<50
+ )
+  return;
+
+ hlast=n;
+ hbusy=1;
+
+ try{
+
+  let result=
+   hand.detectForVideo(
+    v,
+    n
+   );
+
+  hands=
+   result.landmarks||[];
+
+  handsUI();
+
+  /*
+   * ไม่เรียก drawHand()
+   * เพื่อไม่แสดงจุดหรือโครงกระดูก
+   */
+
+  hf++;
+
+  let e=
+   performance.now()-ht;
+
+  if(e>1000){
+
+   txt(
+    "hfps",
+    (hf*1000/e).toFixed(1)
+   );
+
+   hf=0;
+   ht=performance.now();
+  }
+
+ }catch(e){
+
+  console.warn(e);
+
+ }finally{
+
+  hbusy=0;
+ }
+}
+
+
+function scene(){
+
+ if(!objs.length){
+
+  $("scene").textContent=
+   "ฉาก: ยังไม่พบวัตถุ";
+
+  return;
+ }
+
+ let m={};
+
+ for(let o of objs){
+
+  m[o.label]=
+   (m[o.label]||0)+1;
+ }
+
+ let s=
+  `ตรวจพบ ${objs.length} เป้าหมาย — `+
+  Object.entries(m)
+   .map(
+    ([k,n])=>
+     `${thai[k]||k} ${n}`
+   )
+   .join(" • ");
+
+ $("scene").textContent=s;
+
+ if(
+  window.speechSynthesis
+ ){
+
+  let u=
+   new SpeechSynthesisUtterance(s);
+
+  u.lang="th-TH";
+
+  speechSynthesis.cancel();
+
+  speechSynthesis.speak(u);
+ }
+}
+
+
+async function loadObject(){
+
+ try{
+
+  ort.env.wasm.wasmPaths=
+   new URL(
+    "./ort/",
+    document.baseURI
+   ).href;
+
+  ort.env.wasm.numThreads=1;
+
+  let b=
+   await buf(
+    "./models/yolo26n.onnx",
+    p=>
+     txt(
+      "model",
+      `YOLO26n · ${p}%`
+     )
+   );
+
+  session=
+   await ort.InferenceSession.create(
+    b,
+    {
+     executionProviders:["wasm"],
+     graphOptimizationLevel:"basic"
+    }
+   );
+
+  txt(
+   "model",
+   "YOLO26n · READY"
+  );
+
+  scanAt=Date.now();
+
+  requestAnimationFrame(loop);
+
+  $("status").textContent=
+   "● JARVIS AI READY";
+
+  $("status").className=
+   "status ok";
+
+ }catch(e){
+
+  txt(
+   "model",
+   "YOLO26n · ERROR"
+  );
+
+  $("status").textContent=
+   "● OBJECT AI ERROR";
+
+  $("status").className=
+   "status err";
+
+  msg(
+   "Object AI โหลดไม่สำเร็จ<br><br>"+
+   esc(e.message),
+   7000
+  );
+ }
+}
+
+
+async function loadHand(){
+
+ try{
+
+  /*
+   * MediaPipe Tasks Vision
+   */
+  let u=[
+   "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/+esm",
+   "https://esm.sh/@mediapipe/tasks-vision@0.10.22",
+   "https://unpkg.com/@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs"
+  ];
+
+  let mp=null;
+
+  for(let z of u){
+
+   try{
+
+    mp=
+     await Promise.race([
+      import(z),
+      new Promise(
+       (_,r)=>
+        setTimeout(
+         ()=>r(Error("timeout")),
+         10000
+        )
+      )
+     ]);
+
+    if(mp?.HandLandmarker)
+     break;
+
+    mp=null;
+
+   }catch(e){}
+  }
+
+  if(!mp)
+   throw Error(
+    "MediaPipe unavailable"
+   );
+
+  let fs=
+   await mp.FilesetResolver
+    .forVisionTasks(
+     "./mediapipe/wasm"
+    )
+    .catch(
+     ()=>
+      mp.FilesetResolver
+       .forVisionTasks(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm"
+       )
+    );
+
+  let b=
+   await buf(
+    "./models/hand_landmarker.task"
+   );
+
+  try{
+
+   hand=
+    await mp.HandLandmarker
+     .createFromOptions(
+      fs,
+      {
+       baseOptions:{
+        modelAssetBuffer:b,
+        delegate:"GPU"
+       },
+       runningMode:"VIDEO",
+       numHands:2,
+       minHandDetectionConfidence:.45,
+       minHandPresenceConfidence:.45,
+       minTrackingConfidence:.45
+      }
+     );
+
+  }catch(e){
+
+   /*
+    * ถ้า GPU ใช้ไม่ได้ ให้ CPU
+    */
+   hand=
+    await mp.HandLandmarker
+     .createFromOptions(
+      fs,
+      {
+       baseOptions:{
+        modelAssetBuffer:b,
+        delegate:"CPU"
+       },
+       runningMode:"VIDEO",
+       numHands:2,
+       minHandDetectionConfidence:.45,
+       minHandPresenceConfidence:.45,
+       minTrackingConfidence:.45
+      }
+     );
+  }
+
+  requestAnimationFrame(
+   handLoop
+  );
+
+ }catch(e){
+
+  console.warn(
+   "Hand AI disabled",
+   e
+  );
+ }
+}
+
+
+/*
+ * ปุ่มกล้อง
+ */
+$("sw").onclick=
+ async()=>{
+  face=
+   face==="environment"
+    ?"user"
+    :"environment";
+
+  await camera();
+ };
+
+
+/*
+ * ปุ่มสะท้อน
+ */
+$("mir").onclick=
+ ()=>{
+  mirror=!mirror;
+
+  v.classList.toggle(
+   "mirror",
+   mirror
+  );
+
+  $("mir").classList.toggle(
+   "active",
+   mirror
+  );
+
+  draw();
+  targetBox();
+ };
+
+
+/*
+ * สแกนทันที
+ */
+$("scan").onclick=
+ async()=>{
+
+  if(!session)
+   return msg(
+    "Object AI ยังไม่พร้อม"
+   );
+
+  if(busy)
+   return msg(
+    "AI กำลังวิเคราะห์..."
+   );
+
+  busy=1;
+
+  try{
+
+   update(
+    await detect()
+   );
+
+   draw();
+   handsUI();
+   scene();
+
+   scanAt=Date.now();
+
+  }catch(e){
+
+   msg(
+    esc(e.message)
+   );
+
+  }finally{
+
+   busy=0;
+  }
+ };
+
+
+/*
+ * Confidence
+ */
+$("conf").oninput=
+ e=>{
+
+  thr=
+   +e.target.value/100;
+
+  txt(
+   "cv",
+   e.target.value+"%"
+  );
+ };
+
+
+/*
+ * วิเคราะห์ฉาก
+ */
+$("sceneBtn").onclick=
+ scene;
+
+
+/*
+ * ล้างประวัติ
+ */
+$("clearBtn").onclick=
+ ()=>{
+
+  hist=[];
+
+  renderHist();
+ };
+
+
+/*
+ * Lock object
+ */
+$("lockBtn").onclick=
+ ()=>{
+
+  if(
+   target==null &&
+   objs.length
+  ){
+
+   target=
+    objs[0].id;
+
+   $("lockBtn").textContent=
+    "🔓 ปลดล็อก";
+
+  }else{
+
+   target=null;
+
+   $("lockBtn").textContent=
+    "🔒 ล็อกเป้าหมาย";
+
+   $("lockBtn")
+    .classList
+    .remove("active");
+  }
+
+  draw();
+  targetBox();
+ };
+
+
+/*
+ * Voice input
+ */
+let rec=null;
+
+if(
+ window.SpeechRecognition||
+ window.webkitSpeechRecognition
+ ){
+
+ let R=
+  window.SpeechRecognition||
+  window.webkitSpeechRecognition;
+
+ rec=new R;
+
+ rec.lang="th-TH";
+
+ rec.onresult=
+  e=>{
+
+   $("input").value=
+    e.results[0][0].transcript;
+
+   chat();
+  };
+}
+
+
+/*
+ * Chat แบบ local เดิม
+ */
+function chat(){
+
+ let s=
+  $("input").value.trim();
+
+ if(!s)
+  return;
+
+ msg(
+  "💬 JARVIS<br><br>"+
+  esc(s)
+ );
+
+ $("input").value="";
+}
+
+
+$("send").onclick=chat;
+
+
+$("input").onkeydown=
+ e=>{
+
+  if(e.key==="Enter"){
+
+   e.preventDefault();
+
+   chat();
+  }
+ };
+
+
+$("mic").onclick=
+ ()=>{
+
+  if(!rec)
+   return msg(
+    "เบราว์เซอร์นี้ไม่รองรับ Voice"
+   );
+
+  try{
+
+   rec.start();
+
+  }catch(e){}
+ };
+
+
+/*
+ * Clock
+ */
+setInterval(
+ ()=>txt(
+  "time",
+  new Date().toLocaleTimeString(
+   "th-TH",
+   {hour12:false}
+  )
+ ),
+ 1000
+);
+
+
+/*
+ * Video metadata
+ */
+v.onloadedmetadata=
+ ()=>{
+
+  resize();
+
+  let s=
+   stream
+    ?.getVideoTracks()[0]
+    ?.getSettings();
+
+  if(s){
+
+   txt(
+    "cam",
+    s.facingMode==="user"
+     ?"FRONT"
+     :"BACK"
+   );
+
+   txt(
+    "res",
+    `${s.width||v.videoWidth}×${s.height||v.videoHeight}`
+   );
+  }
+ };
+
+
+addEventListener(
+ "resize",
+ resize
+);
+
+
+/*
+ * START
+ */
+reset();
+
+msg(
+ "🚀 JARVIS กำลังเริ่มระบบ...<br><br>"+
+ "ไม่ต้องเลือกโหมด ระบบจะสแกนอัตโนมัติทันที",
+ 2500
+);
+
+camera();
+loadObject();
+loadHand();
+
+</script>
+</html>
