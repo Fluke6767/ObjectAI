@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Local AI Test</title>
+</head>
+
+<body>
+
+<h1>FLUKE LOCAL AI</h1>
+
+<div id="status">
+กำลังโหลด AI...
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+
+<script>
+
+async function test(){
+
+    const status =
+        document.getElementById("status");
+
+    try{
+
+        if(typeof ort === "undefined"){
+
+            throw new Error(
+                "ONNX Runtime โหลดไม่สำเร็จ"
+            );
+
+        }
+
+        status.textContent =
+            "ONNX Runtime พร้อมใช้งาน ✅";
+
+        console.log(
+            "ONNX Runtime:",
+            ort
+        );
+
+    }catch(error){
+
+        status.textContent =
+            "AI ERROR: " +
+            error.message;
+
+        console.error(error);
+
+    }
+
+}
+
+test();
+
+</script>
+
+</body>
+</html>

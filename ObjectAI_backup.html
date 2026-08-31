@@ -1,0 +1,3114 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
+>
+
+<title>FLUKE // JARVIS</title>
+
+<style>
+
+/* =========================================================
+   RESET
+========================================================= */
+
+*{
+    box-sizing:border-box;
+}
+
+html,
+body{
+
+    margin:0;
+
+    width:100%;
+    height:100%;
+
+    overflow:hidden;
+
+    background:#020711;
+    color:#eaf6ff;
+
+    font-family:Arial,sans-serif;
+}
+
+body{
+
+    display:flex;
+    flex-direction:column;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+header{
+
+    height:56px;
+
+    flex-shrink:0;
+
+    display:flex;
+
+    align-items:center;
+    justify-content:space-between;
+
+    padding:0 14px;
+
+    background:rgba(3,12,25,.97);
+
+    border-bottom:1px solid #163452;
+
+    z-index:20;
+}
+
+.logo{
+
+    font-weight:800;
+
+    letter-spacing:2px;
+
+    font-size:14px;
+}
+
+.logo small{
+
+    display:block;
+
+    margin-top:2px;
+
+    font-size:8px;
+
+    color:#67d8ff;
+
+    letter-spacing:1.5px;
+}
+
+.status{
+
+    font-family:monospace;
+
+    font-size:10px;
+
+    color:#71ffad;
+
+    white-space:nowrap;
+}
+
+
+/* =========================================================
+   MAIN
+========================================================= */
+
+main{
+
+    position:relative;
+
+    flex:1;
+
+    min-height:0;
+
+    background:#000;
+
+    overflow:hidden;
+}
+
+
+/* =========================================================
+   VIDEO
+========================================================= */
+
+video{
+
+    position:absolute;
+
+    inset:0;
+
+    width:100%;
+    height:100%;
+
+    object-fit:cover;
+
+    background:#000;
+
+    transform:translateZ(0);
+
+    will-change:transform;
+}
+
+
+/*
+   MIRROR
+
+   สำคัญ:
+   ต้องใส่ translateZ(0) ไว้ด้วย
+   เพื่อไม่ให้ไปทับ optimization เดิม
+*/
+
+video.mirror{
+
+    transform:
+        translateZ(0)
+        scaleX(-1);
+}
+
+
+/* =========================================================
+   CANVAS
+========================================================= */
+
+canvas{
+
+    position:absolute;
+
+    inset:0;
+
+    width:100%;
+    height:100%;
+
+    pointer-events:none;
+
+    transform:translateZ(0);
+
+    will-change:transform;
+}
+
+
+/*
+   Mirror กล่องตรวจจับพร้อมภาพ
+*/
+
+canvas.mirror{
+
+    transform:
+        translateZ(0)
+        scaleX(-1);
+}
+
+
+/* =========================================================
+   CROSSHAIR
+========================================================= */
+
+.crosshair{
+
+    position:absolute;
+
+    left:50%;
+    top:50%;
+
+    width:46px;
+    height:46px;
+
+    transform:translate(-50%,-50%);
+
+    pointer-events:none;
+
+    z-index:5;
+}
+
+.crosshair:before,
+.crosshair:after{
+
+    content:"";
+
+    position:absolute;
+
+    background:#65d8ff;
+
+    box-shadow:
+        0 0 8px #65d8ff;
+}
+
+.crosshair:before{
+
+    width:2px;
+    height:46px;
+
+    left:22px;
+    top:0;
+}
+
+.crosshair:after{
+
+    width:46px;
+    height:2px;
+
+    left:0;
+    top:22px;
+}
+
+.crosshair span{
+
+    position:absolute;
+
+    width:8px;
+    height:8px;
+
+    left:19px;
+    top:19px;
+
+    border:1px solid white;
+
+    border-radius:50%;
+}
+
+
+/* =========================================================
+   MODE
+========================================================= */
+
+.mode{
+
+    position:absolute;
+
+    top:10px;
+    left:10px;
+
+    padding:7px 9px;
+
+    border-radius:8px;
+
+    background:rgba(2,9,20,.78);
+
+    border:1px solid rgba(80,190,255,.3);
+
+    font-family:monospace;
+
+    font-size:9px;
+
+    z-index:10;
+}
+
+
+/* =========================================================
+   MONITOR
+========================================================= */
+
+.monitor{
+
+    position:absolute;
+
+    top:10px;
+    right:10px;
+
+    width:190px;
+
+    padding:10px;
+
+    border-radius:11px;
+
+    background:rgba(2,9,20,.82);
+
+    border:1px solid rgba(80,190,255,.32);
+
+    backdrop-filter:blur(7px);
+
+    font-family:monospace;
+
+    font-size:9px;
+
+    z-index:10;
+
+    contain:content;
+}
+
+.monitor-title{
+
+    color:#69d8ff;
+
+    font-weight:bold;
+
+    margin-bottom:7px;
+
+    letter-spacing:1px;
+}
+
+.row{
+
+    display:flex;
+
+    justify-content:space-between;
+    align-items:center;
+
+    gap:8px;
+
+    margin:4px 0;
+}
+
+.row > span:first-child{
+
+    color:#9ab5c7;
+}
+
+.value{
+
+    color:white;
+
+    text-align:right;
+
+    white-space:nowrap;
+}
+
+.good{
+
+    color:#71ffad;
+}
+
+.objects{
+
+    margin-top:7px;
+
+    padding-top:7px;
+
+    border-top:1px solid rgba(255,255,255,.12);
+
+    max-height:110px;
+
+    overflow:hidden;
+}
+
+.object{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    gap:8px;
+
+    margin:3px 0;
+}
+
+.object-name{
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+}
+
+.conf{
+
+    color:#72d8ff;
+
+    flex-shrink:0;
+}
+
+
+/* =========================================================
+   ERROR / MESSAGE
+========================================================= */
+
+.message{
+
+    display:none;
+
+    position:absolute;
+
+    left:50%;
+    top:18%;
+
+    transform:translateX(-50%);
+
+    width:min(92%,560px);
+
+    max-height:65%;
+
+    overflow:auto;
+
+    padding:14px;
+
+    border-radius:10px;
+
+    background:rgba(2,9,20,.97);
+
+    border:1px solid #315a78;
+
+    text-align:left;
+
+    font-size:12px;
+
+    line-height:1.5;
+
+    z-index:50;
+}
+
+.message.show{
+
+    display:block;
+}
+
+.message.error{
+
+    border-color:#ff6262;
+}
+
+.message-title{
+
+    color:#ff7373;
+
+    font-weight:bold;
+
+    font-family:monospace;
+
+    margin-bottom:10px;
+}
+
+.message-text{
+
+    color:#dceeff;
+
+    word-break:break-word;
+
+    white-space:pre-wrap;
+
+    font-family:monospace;
+
+    font-size:11px;
+}
+
+.message-close{
+
+    display:block;
+
+    width:100%;
+
+    margin-top:12px;
+}
+
+
+/* =========================================================
+   CONTROLS
+========================================================= */
+
+.controls{
+
+    position:absolute;
+
+    left:50%;
+    bottom:12px;
+
+    transform:translateX(-50%);
+
+    display:flex;
+
+    gap:7px;
+
+    z-index:15;
+}
+
+button{
+
+    border:1px solid #285678;
+
+    background:rgba(3,15,29,.9);
+
+    color:#e4f7ff;
+
+    border-radius:9px;
+
+    padding:9px 12px;
+
+    font-weight:bold;
+
+    font-size:10px;
+
+    min-height:38px;
+
+    touch-action:manipulation;
+}
+
+button:active{
+
+    transform:scale(.96);
+}
+
+button.primary{
+
+    border-color:#51cfff;
+
+    color:#79ddff;
+}
+
+
+/* =========================================================
+   CHAT
+========================================================= */
+
+.bottom{
+
+    height:64px;
+
+    flex-shrink:0;
+
+    display:flex;
+
+    gap:7px;
+
+    padding:8px;
+
+    background:#030b17;
+
+    border-top:1px solid #163452;
+
+    z-index:20;
+}
+
+input{
+
+    flex:1;
+
+    min-width:0;
+
+    border:1px solid #234765;
+
+    border-radius:9px;
+
+    outline:none;
+
+    background:#071321;
+
+    color:white;
+
+    padding:0 11px;
+
+    font-size:16px;
+
+    transform:translateZ(0);
+}
+
+input:focus{
+
+    border-color:#58d0ff;
+}
+
+input::placeholder{
+
+    color:#638097;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media(max-width:600px){
+
+    .monitor{
+
+        width:175px;
+
+        font-size:8px;
+    }
+
+    .controls{
+
+        gap:5px;
+    }
+
+    .controls button{
+
+        padding:8px 9px;
+
+        font-size:9px;
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<!-- =======================================================
+     HEADER
+======================================================= -->
+
+<header>
+
+    <div class="logo">
+
+        FLUKE // JARVIS
+
+        <small>
+            LOCAL COMPUTER VISION
+        </small>
+
+    </div>
+
+    <div
+        id="status"
+        class="status"
+    >
+        ● STARTING
+    </div>
+
+</header>
+
+
+<!-- =======================================================
+     MAIN
+======================================================= -->
+
+<main>
+
+
+    <!-- CAMERA -->
+
+    <video
+        id="video"
+        autoplay
+        muted
+        playsinline
+    ></video>
+
+
+    <!-- DETECTION CANVAS -->
+
+    <canvas
+        id="canvas"
+    ></canvas>
+
+
+    <!-- CROSSHAIR -->
+
+    <div class="crosshair">
+
+        <span></span>
+
+    </div>
+
+
+    <!-- AI MODE -->
+
+    <div class="mode">
+
+        OBJECT AI ·
+
+        <span id="aiStatus">
+            LOADING
+        </span>
+
+    </div>
+
+
+    <!-- ===================================================
+         MONITOR
+    ==================================================== -->
+
+    <div class="monitor">
+
+        <div class="monitor-title">
+            JARVIS MONITOR
+        </div>
+
+
+        <div class="row">
+
+            <span>
+                TIME
+            </span>
+
+            <span
+                id="time"
+                class="value"
+            >
+                --:--:--
+            </span>
+
+        </div>
+
+
+        <div class="row">
+
+            <span>
+                CAMERA
+            </span>
+
+            <span
+                id="camera"
+                class="value"
+            >
+                ---
+            </span>
+
+        </div>
+
+
+        <div class="row">
+
+            <span>
+                RESOLUTION
+            </span>
+
+            <span
+                id="resolution"
+                class="value"
+            >
+                ---
+            </span>
+
+        </div>
+
+
+        <div class="row">
+
+            <span>
+                AI FPS
+            </span>
+
+            <span
+                id="fps"
+                class="value"
+            >
+                0.0
+            </span>
+
+        </div>
+
+
+        <div class="row">
+
+            <span>
+                OBJECTS
+            </span>
+
+            <span
+                id="count"
+                class="value"
+            >
+                0
+            </span>
+
+        </div>
+
+
+        <div
+            class="objects"
+            id="objects"
+        >
+
+        </div>
+
+    </div>
+
+
+    <!-- ===================================================
+         MESSAGE / ERROR
+    ==================================================== -->
+
+    <div
+        id="message"
+        class="message"
+    >
+
+        <div
+            id="messageTitle"
+            class="message-title"
+        >
+            JARVIS
+        </div>
+
+        <div
+            id="messageText"
+            class="message-text"
+        ></div>
+
+        <button
+            id="messageClose"
+            class="message-close"
+        >
+            ปิด
+        </button>
+
+    </div>
+
+
+    <!-- ===================================================
+         CONTROLS
+    ==================================================== -->
+
+    <div class="controls">
+
+        <button id="switch">
+            🔄 กล้อง
+        </button>
+
+        <button id="mirror">
+            🪞 สะท้อน
+        </button>
+
+        <button
+            id="scan"
+            class="primary"
+        >
+            ● สแกน
+        </button>
+
+    </div>
+
+
+</main>
+
+
+<!-- =======================================================
+     CHAT
+======================================================= -->
+
+<div class="bottom">
+
+    <input
+        id="input"
+        type="text"
+        autocomplete="off"
+        spellcheck="false"
+        placeholder="พิมพ์ถาม JARVIS..."
+    >
+
+    <button
+        id="send"
+        class="primary"
+    >
+        ส่ง
+    </button>
+
+    <button id="voice">
+        🎤
+    </button>
+
+</div>
+
+
+<!-- =======================================================
+     ONNX RUNTIME
+======================================================= -->
+
+<script src="./ort/ort.min.js"></script>
+
+
+<script>
+
+/* =========================================================
+   FLUKE // JARVIS
+   OBJECT AI
+========================================================= */
+
+
+/* =========================================================
+   CONFIG
+========================================================= */
+
+const MODEL_URL =
+    "./models/yolo26n.onnx";
+
+
+const INPUT_SIZE =
+    640;
+
+
+const AI_INTERVAL =
+    180;
+
+
+const CONF_THRESHOLD =
+    0.35;
+
+
+const MAX_DISPLAY_OBJECTS =
+    8;
+
+
+/* =========================================================
+   COCO LABELS
+========================================================= */
+
+const LABELS = [
+
+    "person",
+    "bicycle",
+    "car",
+    "motorcycle",
+    "airplane",
+    "bus",
+    "train",
+    "truck",
+    "boat",
+    "traffic light",
+    "fire hydrant",
+    "stop sign",
+    "parking meter",
+    "bench",
+    "bird",
+    "cat",
+    "dog",
+    "horse",
+    "sheep",
+    "cow",
+    "elephant",
+    "bear",
+    "zebra",
+    "giraffe",
+    "backpack",
+    "umbrella",
+    "handbag",
+    "tie",
+    "suitcase",
+    "frisbee",
+    "skis",
+    "snowboard",
+    "sports ball",
+    "kite",
+    "baseball bat",
+    "baseball glove",
+    "skateboard",
+    "surfboard",
+    "tennis racket",
+    "bottle",
+    "wine glass",
+    "cup",
+    "fork",
+    "knife",
+    "spoon",
+    "bowl",
+    "banana",
+    "apple",
+    "sandwich",
+    "orange",
+    "broccoli",
+    "carrot",
+    "hot dog",
+    "pizza",
+    "donut",
+    "cake",
+    "chair",
+    "couch",
+    "potted plant",
+    "bed",
+    "dining table",
+    "toilet",
+    "tv",
+    "laptop",
+    "mouse",
+    "remote",
+    "keyboard",
+    "cell phone",
+    "microwave",
+    "oven",
+    "toaster",
+    "sink",
+    "refrigerator",
+    "book",
+    "clock",
+    "vase",
+    "scissors",
+    "teddy bear",
+    "hair drier",
+    "toothbrush"
+
+];
+
+
+/* =========================================================
+   DOM
+========================================================= */
+
+const video =
+    document.getElementById(
+        "video"
+    );
+
+
+const canvas =
+    document.getElementById(
+        "canvas"
+    );
+
+
+const ctx =
+    canvas.getContext(
+        "2d",
+        {
+            alpha:true
+        }
+    );
+
+
+const status =
+    document.getElementById(
+        "status"
+    );
+
+
+const aiStatus =
+    document.getElementById(
+        "aiStatus"
+    );
+
+
+const timeEl =
+    document.getElementById(
+        "time"
+    );
+
+
+const cameraEl =
+    document.getElementById(
+        "camera"
+    );
+
+
+const resolutionEl =
+    document.getElementById(
+        "resolution"
+    );
+
+
+const fpsEl =
+    document.getElementById(
+        "fps"
+    );
+
+
+const countEl =
+    document.getElementById(
+        "count"
+    );
+
+
+const objectsEl =
+    document.getElementById(
+        "objects"
+    );
+
+
+const message =
+    document.getElementById(
+        "message"
+    );
+
+
+const messageTitle =
+    document.getElementById(
+        "messageTitle"
+    );
+
+
+const messageText =
+    document.getElementById(
+        "messageText"
+    );
+
+
+const messageClose =
+    document.getElementById(
+        "messageClose"
+    );
+
+
+const input =
+    document.getElementById(
+        "input"
+    );
+
+
+const send =
+    document.getElementById(
+        "send"
+    );
+
+
+const voice =
+    document.getElementById(
+        "voice"
+    );
+
+
+const switchBtn =
+    document.getElementById(
+        "switch"
+    );
+
+
+const mirrorBtn =
+    document.getElementById(
+        "mirror"
+    );
+
+
+const scanBtn =
+    document.getElementById(
+        "scan"
+    );
+
+
+/* =========================================================
+   STATE
+========================================================= */
+
+let stream =
+    null;
+
+
+let facingMode =
+    "environment";
+
+
+let mirrored =
+    false;
+
+
+let session =
+    null;
+
+
+let running =
+    false;
+
+
+let inferenceBusy =
+    false;
+
+
+let lastInference =
+    0;
+
+
+let currentObjects =
+    [];
+
+
+let aiFPS =
+    0;
+
+
+let fpsCounter =
+    0;
+
+
+let fpsStart =
+    performance.now();
+
+
+/*
+   Error จะค้าง
+   ไม่มี timeout
+*/
+
+let messageIsError =
+    false;
+
+
+/* =========================================================
+   CAMERA
+========================================================= */
+
+async function startCamera(){
+
+    try{
+
+        if(
+            !navigator.mediaDevices ||
+            !navigator.mediaDevices.getUserMedia
+        ){
+
+            throw new Error(
+                "เบราว์เซอร์ไม่รองรับ Camera API"
+            );
+        }
+
+
+        if(stream){
+
+            stream
+                .getTracks()
+                .forEach(
+                    track =>
+                        track.stop()
+                );
+
+            stream =
+                null;
+        }
+
+
+        stream =
+            await navigator
+                .mediaDevices
+                .getUserMedia({
+
+                    video:{
+
+                        facingMode:{
+                            ideal:
+                                facingMode
+                        },
+
+                        width:{
+                            ideal:1280
+                        },
+
+                        height:{
+                            ideal:720
+                        },
+
+                        frameRate:{
+                            ideal:30,
+                            max:30
+                        }
+
+                    },
+
+                    audio:false
+
+                });
+
+
+        video.srcObject =
+            stream;
+
+
+        await video.play();
+
+
+        updateCameraInfo();
+
+
+        resizeCanvas();
+
+
+        status.textContent =
+            "● CAMERA READY";
+
+
+        status.style.color =
+            "#71ffad";
+
+    }
+
+    catch(error){
+
+        console.error(
+            "Camera:",
+            error
+        );
+
+
+        status.textContent =
+            "● CAMERA ERROR";
+
+
+        status.style.color =
+            "#ff7373";
+
+
+        showError(
+            "CAMERA ERROR",
+            error
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   CAMERA INFO
+========================================================= */
+
+function updateCameraInfo(){
+
+    if(!stream)
+        return;
+
+
+    const track =
+        stream.getVideoTracks()[0];
+
+
+    if(!track)
+        return;
+
+
+    const settings =
+        track.getSettings();
+
+
+    const camera =
+        settings.facingMode ===
+        "user"
+
+            ? "FRONT"
+
+            : "BACK";
+
+
+    const width =
+        settings.width ||
+        video.videoWidth ||
+        0;
+
+
+    const height =
+        settings.height ||
+        video.videoHeight ||
+        0;
+
+
+    setTextIfChanged(
+        cameraEl,
+        camera
+    );
+
+
+    setTextIfChanged(
+        resolutionEl,
+        width +
+        "×" +
+        height
+    );
+
+}
+
+
+/* =========================================================
+   CANVAS
+========================================================= */
+
+function resizeCanvas(){
+
+    if(!video.videoWidth)
+        return;
+
+
+    const width =
+        video.videoWidth;
+
+
+    const height =
+        video.videoHeight;
+
+
+    if(
+        canvas.width !== width ||
+        canvas.height !== height
+    ){
+
+        canvas.width =
+            width;
+
+        canvas.height =
+            height;
+
+    }
+
+
+    redraw();
+
+}
+
+
+/* =========================================================
+   ONNX RUNTIME
+========================================================= */
+
+async function loadObjectAI(){
+
+    try{
+
+        aiStatus.textContent =
+            "LOADING";
+
+
+        status.textContent =
+            "● LOADING AI";
+
+
+        status.style.color =
+            "#67d8ff";
+
+
+        /*
+           สำคัญที่สุด
+
+           ObjectAI.html
+               |
+               └── ort/
+                   ├── ort.min.js
+                   └── ort-wasm...
+
+           ดังนั้น WASM path ต้องเป็น ./ort/
+        */
+
+        ort.env.wasm.wasmPaths =
+            new URL(
+                "./ort/",
+                document.baseURI
+            ).href;
+
+
+        /*
+           Android ใช้ 1 thread
+        */
+
+        ort.env.wasm.numThreads =
+            1;
+
+
+        ort.env.wasm.proxy =
+            false;
+
+
+        console.log(
+            "ONNX Runtime:",
+            ort.version
+        );
+
+
+        console.log(
+            "WASM path:",
+            ort.env.wasm.wasmPaths
+        );
+
+
+        console.log(
+            "Model:",
+            MODEL_URL
+        );
+
+
+        /*
+           โหลด Model
+        */
+
+        session =
+            await ort.InferenceSession.create(
+
+                MODEL_URL,
+
+                {
+
+                    executionProviders:[
+                        "wasm"
+                    ],
+
+                    graphOptimizationLevel:
+                        "all"
+
+                }
+
+            );
+
+
+        console.log(
+            "AI input:",
+            session.inputNames
+        );
+
+
+        console.log(
+            "AI output:",
+            session.outputNames
+        );
+
+
+        aiStatus.textContent =
+            "READY";
+
+
+        status.textContent =
+            "● OBJECT AI READY";
+
+
+        status.style.color =
+            "#71ffad";
+
+
+        running =
+            true;
+
+
+        requestAnimationFrame(
+            aiLoop
+        );
+
+    }
+
+    catch(error){
+
+        console.error(
+            "AI LOAD ERROR:",
+            error
+        );
+
+
+        running =
+            false;
+
+
+        session =
+            null;
+
+
+        aiStatus.textContent =
+            "ERROR";
+
+
+        status.textContent =
+            "● AI ERROR";
+
+
+        status.style.color =
+            "#ff7373";
+
+
+        /*
+           Error ค้างบนหน้าจอ
+        */
+
+        showError(
+            "OBJECT AI ERROR",
+            error
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   INPUT CANVAS
+========================================================= */
+
+const inputCanvas =
+    document.createElement(
+        "canvas"
+    );
+
+
+inputCanvas.width =
+    INPUT_SIZE;
+
+
+inputCanvas.height =
+    INPUT_SIZE;
+
+
+const inputCtx =
+    inputCanvas.getContext(
+        "2d",
+        {
+            willReadFrequently:true
+        }
+    );
+
+
+/* =========================================================
+   CREATE TENSOR
+========================================================= */
+
+function createTensor(){
+
+    /*
+       ป้องกัน video ยังไม่พร้อม
+    */
+
+    if(
+        video.readyState <
+        HTMLMediaElement.HAVE_CURRENT_DATA
+    ){
+
+        return null;
+    }
+
+
+    inputCtx.drawImage(
+
+        video,
+
+        0,
+        0,
+
+        INPUT_SIZE,
+        INPUT_SIZE
+
+    );
+
+
+    const image =
+        inputCtx.getImageData(
+
+            0,
+            0,
+
+            INPUT_SIZE,
+            INPUT_SIZE
+
+        );
+
+
+    const data =
+        image.data;
+
+
+    const area =
+        INPUT_SIZE *
+        INPUT_SIZE;
+
+
+    const floatData =
+        new Float32Array(
+            area * 3
+        );
+
+
+    for(
+        let i = 0;
+        i < area;
+        i++
+    ){
+
+        const p =
+            i * 4;
+
+
+        floatData[i] =
+            data[p] /
+            255;
+
+
+        floatData[
+            area + i
+        ] =
+            data[p + 1] /
+            255;
+
+
+        floatData[
+            area * 2 + i
+        ] =
+            data[p + 2] /
+            255;
+
+    }
+
+
+    return new ort.Tensor(
+
+        "float32",
+
+        floatData,
+
+        [
+            1,
+            3,
+            INPUT_SIZE,
+            INPUT_SIZE
+        ]
+
+    );
+
+}
+
+
+/* =========================================================
+   DETECT
+========================================================= */
+
+async function detect(){
+
+    if(!session)
+        return [];
+
+
+    if(!video.videoWidth)
+        return [];
+
+
+    const tensor =
+        createTensor();
+
+
+    if(!tensor)
+        return [];
+
+
+    const inputName =
+        session.inputNames[0];
+
+
+    const outputs =
+        await session.run({
+
+            [inputName]:
+                tensor
+
+        });
+
+
+    const outputName =
+        session.outputNames[0];
+
+
+    const output =
+        outputs[outputName];
+
+
+    return parseOutput(
+        output
+    );
+
+}
+
+
+/* =========================================================
+   PARSE OUTPUT
+========================================================= */
+
+function parseOutput(output){
+
+    if(!output)
+        return [];
+
+
+    const data =
+        output.data;
+
+
+    const dims =
+        output.dims;
+
+
+    if(
+        !data ||
+        !dims ||
+        dims.length !== 3
+    ){
+
+        console.warn(
+            "Unsupported AI output:",
+            dims
+        );
+
+        return [];
+    }
+
+
+    const objects =
+        [];
+
+
+    const rows =
+        dims[1];
+
+
+    const cols =
+        dims[2];
+
+
+    /*
+       [1,N,6]
+    */
+
+    if(cols === 6){
+
+        for(
+            let i = 0;
+            i < rows;
+            i++
+        ){
+
+            const base =
+                i * 6;
+
+
+            const confidence =
+                Number(
+                    data[
+                        base + 4
+                    ]
+                );
+
+
+            if(
+                !Number.isFinite(
+                    confidence
+                ) ||
+                confidence <
+                CONF_THRESHOLD
+            ){
+
+                continue;
+            }
+
+
+            const classId =
+                Math.round(
+                    Number(
+                        data[
+                            base + 5
+                        ]
+                    )
+                );
+
+
+            const x1 =
+                Number(
+                    data[base]
+                );
+
+
+            const y1 =
+                Number(
+                    data[
+                        base + 1
+                    ]
+                );
+
+
+            const x2 =
+                Number(
+                    data[
+                        base + 2
+                    ]
+                );
+
+
+            const y2 =
+                Number(
+                    data[
+                        base + 3
+                    ]
+                );
+
+
+            if(
+                !Number.isFinite(x1) ||
+                !Number.isFinite(y1) ||
+                !Number.isFinite(x2) ||
+                !Number.isFinite(y2)
+            ){
+
+                continue;
+            }
+
+
+            objects.push({
+
+                x1,
+                y1,
+                x2,
+                y2,
+
+                confidence,
+
+                classId,
+
+                label:
+                    LABELS[classId] ||
+                    "object"
+
+            });
+
+        }
+
+    }
+
+
+    /*
+       [1,6,N]
+    */
+
+    else if(rows === 6){
+
+        for(
+            let i = 0;
+            i < cols;
+            i++
+        ){
+
+            const confidence =
+                Number(
+                    data[
+                        cols * 4 + i
+                    ]
+                );
+
+
+            if(
+                !Number.isFinite(
+                    confidence
+                ) ||
+                confidence <
+                CONF_THRESHOLD
+            ){
+
+                continue;
+            }
+
+
+            const classId =
+                Math.round(
+                    Number(
+                        data[
+                            cols * 5 + i
+                        ]
+                    )
+                );
+
+
+            const x1 =
+                Number(
+                    data[i]
+                );
+
+
+            const y1 =
+                Number(
+                    data[
+                        cols + i
+                    ]
+                );
+
+
+            const x2 =
+                Number(
+                    data[
+                        cols * 2 + i
+                    ]
+                );
+
+
+            const y2 =
+                Number(
+                    data[
+                        cols * 3 + i
+                    ]
+                );
+
+
+            if(
+                !Number.isFinite(x1) ||
+                !Number.isFinite(y1) ||
+                !Number.isFinite(x2) ||
+                !Number.isFinite(y2)
+            ){
+
+                continue;
+            }
+
+
+            objects.push({
+
+                x1,
+                y1,
+                x2,
+                y2,
+
+                confidence,
+
+                classId,
+
+                label:
+                    LABELS[classId] ||
+                    "object"
+
+            });
+
+        }
+
+    }
+
+
+    return objects;
+
+}
+
+
+/* =========================================================
+   DRAW
+========================================================= */
+
+function redraw(){
+
+    if(!ctx)
+        return;
+
+
+    ctx.clearRect(
+
+        0,
+        0,
+
+        canvas.width,
+        canvas.height
+
+    );
+
+
+    if(
+        !canvas.width ||
+        !canvas.height
+    ){
+
+        return;
+    }
+
+
+    const sx =
+        canvas.width /
+        INPUT_SIZE;
+
+
+    const sy =
+        canvas.height /
+        INPUT_SIZE;
+
+
+    ctx.lineWidth =
+        2;
+
+
+    ctx.font =
+        "bold 13px Arial";
+
+
+    for(
+        const obj of currentObjects
+    ){
+
+        let x =
+            obj.x1 *
+            sx;
+
+
+        let y =
+            obj.y1 *
+            sy;
+
+
+        let w =
+            (
+                obj.x2 -
+                obj.x1
+            ) *
+            sx;
+
+
+        let h =
+            (
+                obj.y2 -
+                obj.y1
+            ) *
+            sy;
+
+
+        if(
+            !Number.isFinite(x) ||
+            !Number.isFinite(y) ||
+            !Number.isFinite(w) ||
+            !Number.isFinite(h)
+        ){
+
+            continue;
+        }
+
+
+        /*
+           กันกรอบติดลบ
+        */
+
+        if(w < 0){
+
+            x += w;
+
+            w = Math.abs(w);
+
+        }
+
+
+        if(h < 0){
+
+            y += h;
+
+            h = Math.abs(h);
+
+        }
+
+
+        ctx.strokeStyle =
+            "#5ed7ff";
+
+
+        ctx.strokeRect(
+
+            x,
+            y,
+            w,
+            h
+
+        );
+
+
+        const text =
+            obj.label +
+            " " +
+            Math.round(
+                obj.confidence *
+                100
+            ) +
+            "%";
+
+
+        const metrics =
+            ctx.measureText(
+                text
+            );
+
+
+        const labelY =
+            Math.max(
+                0,
+                y - 21
+            );
+
+
+        ctx.fillStyle =
+            "rgba(2,9,20,.82)";
+
+
+        ctx.fillRect(
+
+            x,
+
+            labelY,
+
+            metrics.width + 10,
+
+            21
+
+        );
+
+
+        ctx.fillStyle =
+            "#ffffff";
+
+
+        ctx.fillText(
+
+            text,
+
+            x + 5,
+
+            Math.max(
+                15,
+                y - 6
+            )
+
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   OBJECT MONITOR
+========================================================= */
+
+const objectRows =
+    [];
+
+
+function initObjectRows(){
+
+    objectsEl.replaceChildren();
+
+
+    for(
+        let i = 0;
+        i < MAX_DISPLAY_OBJECTS;
+        i++
+    ){
+
+        const row =
+            document.createElement(
+                "div"
+            );
+
+
+        row.className =
+            "object";
+
+
+        row.style.display =
+            "none";
+
+
+        const name =
+            document.createElement(
+                "span"
+            );
+
+
+        name.className =
+            "object-name";
+
+
+        const conf =
+            document.createElement(
+                "span"
+            );
+
+
+        conf.className =
+            "conf";
+
+
+        row.appendChild(
+            name
+        );
+
+
+        row.appendChild(
+            conf
+        );
+
+
+        objectsEl.appendChild(
+            row
+        );
+
+
+        objectRows.push({
+
+            row,
+            name,
+            conf
+
+        });
+
+    }
+
+}
+
+
+function updateObjects(objects){
+
+    setTextIfChanged(
+
+        countEl,
+
+        String(
+            objects.length
+        )
+
+    );
+
+
+    const visible =
+        objects.slice(
+            0,
+            MAX_DISPLAY_OBJECTS
+        );
+
+
+    for(
+        let i = 0;
+        i < MAX_DISPLAY_OBJECTS;
+        i++
+    ){
+
+        const ui =
+            objectRows[i];
+
+
+        const obj =
+            visible[i];
+
+
+        if(!obj){
+
+            ui.row.style.display =
+                "none";
+
+            continue;
+        }
+
+
+        ui.row.style.display =
+            "flex";
+
+
+        const confidence =
+            Math.round(
+                obj.confidence *
+                100
+            ) +
+            "%";
+
+
+        setTextIfChanged(
+            ui.name,
+            obj.label
+        );
+
+
+        setTextIfChanged(
+            ui.conf,
+            confidence
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   AI LOOP
+========================================================= */
+
+async function aiLoop(now){
+
+    requestAnimationFrame(
+        aiLoop
+    );
+
+
+    if(!running)
+        return;
+
+
+    if(inferenceBusy)
+        return;
+
+
+    if(
+        now -
+        lastInference <
+        AI_INTERVAL
+    ){
+
+        return;
+    }
+
+
+    lastInference =
+        now;
+
+
+    inferenceBusy =
+        true;
+
+
+    try{
+
+        const objects =
+            await detect();
+
+
+        currentObjects =
+            objects || [];
+
+
+        redraw();
+
+
+        updateObjects(
+            currentObjects
+        );
+
+
+        fpsCounter++;
+
+
+        const elapsed =
+            performance.now() -
+            fpsStart;
+
+
+        if(
+            elapsed >= 1000
+        ){
+
+            const newFPS =
+                fpsCounter /
+                (
+                    elapsed /
+                    1000
+                );
+
+
+            const rounded =
+                Number(
+                    newFPS.toFixed(1)
+                );
+
+
+            if(
+                rounded !== aiFPS
+            ){
+
+                aiFPS =
+                    rounded;
+
+
+                setTextIfChanged(
+
+                    fpsEl,
+
+                    aiFPS.toFixed(1)
+
+                );
+
+            }
+
+
+            fpsCounter =
+                0;
+
+
+            fpsStart =
+                performance.now();
+
+        }
+
+    }
+
+    catch(error){
+
+        /*
+           ถ้า inference พัง
+           หยุด AI และแสดง Error ค้าง
+        */
+
+        console.error(
+            "AI INFERENCE ERROR:",
+            error
+        );
+
+
+        running =
+            false;
+
+
+        showError(
+            "AI INFERENCE ERROR",
+            error
+        );
+
+    }
+
+    finally{
+
+        inferenceBusy =
+            false;
+
+    }
+
+}
+
+
+/* =========================================================
+   TIME
+========================================================= */
+
+let lastTimeText =
+    "";
+
+
+function updateTime(){
+
+    const now =
+        new Date();
+
+
+    const text =
+        String(
+            now.getHours()
+        ).padStart(2,"0") +
+        ":" +
+        String(
+            now.getMinutes()
+        ).padStart(2,"0") +
+        ":" +
+        String(
+            now.getSeconds()
+        ).padStart(2,"0");
+
+
+    if(
+        text !== lastTimeText
+    ){
+
+        lastTimeText =
+            text;
+
+
+        timeEl.textContent =
+            text;
+
+    }
+
+}
+
+
+setInterval(
+    updateTime,
+    1000
+);
+
+
+updateTime();
+
+
+/* =========================================================
+   SWITCH CAMERA
+========================================================= */
+
+switchBtn.addEventListener(
+
+    "click",
+
+    async function(){
+
+        facingMode =
+            facingMode ===
+            "environment"
+
+                ? "user"
+
+                : "environment";
+
+
+        await startCamera();
+
+    }
+
+);
+
+
+/* =========================================================
+   MIRROR
+========================================================= */
+
+mirrorBtn.addEventListener(
+
+    "click",
+
+    function(){
+
+        mirrored =
+            !mirrored;
+
+
+        /*
+           เปลี่ยนทั้ง video และ canvas
+        */
+
+        video.classList.toggle(
+
+            "mirror",
+
+            mirrored
+
+        );
+
+
+        canvas.classList.toggle(
+
+            "mirror",
+
+            mirrored
+
+        );
+
+
+        console.log(
+            "Mirror:",
+            mirrored
+        );
+
+    }
+
+);
+
+
+/* =========================================================
+   MANUAL SCAN
+========================================================= */
+
+scanBtn.addEventListener(
+
+    "click",
+
+    async function(){
+
+        if(!session){
+
+            showError(
+
+                "OBJECT AI NOT READY",
+
+                new Error(
+                    "AI ยังโหลด Model ไม่เสร็จ"
+                )
+
+            );
+
+            return;
+        }
+
+
+        if(inferenceBusy){
+
+            showMessage(
+                "AI กำลังวิเคราะห์..."
+            );
+
+            return;
+        }
+
+
+        inferenceBusy =
+            true;
+
+
+        try{
+
+            const objects =
+                await detect();
+
+
+            currentObjects =
+                objects || [];
+
+
+            redraw();
+
+
+            updateObjects(
+                currentObjects
+            );
+
+        }
+
+        catch(error){
+
+            console.error(
+                "MANUAL SCAN ERROR:",
+                error
+            );
+
+
+            showError(
+                "MANUAL SCAN ERROR",
+                error
+            );
+
+        }
+
+        finally{
+
+            inferenceBusy =
+                false;
+
+        }
+
+    }
+
+);
+
+
+/* =========================================================
+   MESSAGE
+========================================================= */
+
+function showMessage(text){
+
+    messageIsError =
+        false;
+
+
+    message.classList.remove(
+        "error"
+    );
+
+
+    messageTitle.textContent =
+        "JARVIS";
+
+
+    messageText.textContent =
+        String(text);
+
+
+    message.classList.add(
+        "show"
+    );
+
+}
+
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+function showError(title,error){
+
+    messageIsError =
+        true;
+
+
+    message.classList.add(
+        "error"
+    );
+
+
+    messageTitle.textContent =
+        "⚠ " +
+        title;
+
+
+    let text =
+        "";
+
+
+    if(error){
+
+        text +=
+            "MESSAGE:\n" +
+            String(
+                error.message ||
+                error
+            );
+
+
+        if(
+            error.name
+        ){
+
+            text +=
+                "\n\nNAME:\n" +
+                String(
+                    error.name
+                );
+
+        }
+
+
+        if(
+            error.stack
+        ){
+
+            text +=
+                "\n\nSTACK:\n" +
+                String(
+                    error.stack
+                );
+
+        }
+
+    }
+
+
+    messageText.textContent =
+        text;
+
+
+    /*
+       ไม่มี setTimeout
+
+       Error จะค้างจนกว่าจะกดปิด
+    */
+
+    message.classList.add(
+        "show"
+    );
+
+}
+
+
+/* =========================================================
+   CLOSE MESSAGE
+========================================================= */
+
+messageClose.addEventListener(
+
+    "click",
+
+    function(){
+
+        message.classList.remove(
+            "show"
+        );
+
+    }
+
+);
+
+
+/* =========================================================
+   SAFE TEXT
+========================================================= */
+
+function setTextIfChanged(
+    element,
+    value
+){
+
+    const text =
+        String(value);
+
+
+    if(
+        element.textContent !==
+        text
+    ){
+
+        element.textContent =
+            text;
+
+    }
+
+}
+
+
+/* =========================================================
+   CHAT
+========================================================= */
+
+function chat(){
+
+    const text =
+        input.value.trim();
+
+
+    if(!text)
+        return;
+
+
+    showMessage(
+
+        "💬 JARVIS\n\n" +
+        "ข้อความ: " +
+        text
+
+    );
+
+
+    input.value =
+        "";
+
+}
+
+
+input.addEventListener(
+
+    "keydown",
+
+    function(event){
+
+        if(
+            event.key ===
+            "Enter"
+        ){
+
+            event.preventDefault();
+
+            chat();
+
+        }
+
+    }
+
+);
+
+
+send.addEventListener(
+    "click",
+    chat
+);
+
+
+/* =========================================================
+   VOICE
+========================================================= */
+
+let recognition =
+    null;
+
+
+if(
+
+    "SpeechRecognition"
+    in window ||
+
+    "webkitSpeechRecognition"
+    in window
+
+){
+
+    const SpeechRecognition =
+        window.SpeechRecognition ||
+        window.webkitSpeechRecognition;
+
+
+    recognition =
+        new SpeechRecognition();
+
+
+    recognition.lang =
+        "th-TH";
+
+
+    recognition.continuous =
+        false;
+
+
+    recognition.interimResults =
+        false;
+
+
+    recognition.onresult =
+        function(event){
+
+            const text =
+                event
+                    .results[0][0]
+                    .transcript;
+
+
+            input.value =
+                text;
+
+
+            chat();
+
+        };
+
+
+    recognition.onerror =
+        function(event){
+
+            showError(
+
+                "VOICE ERROR",
+
+                new Error(
+                    event.error
+                )
+
+            );
+
+        };
+
+}
+
+
+voice.addEventListener(
+
+    "click",
+
+    function(){
+
+        if(!recognition){
+
+            showError(
+
+                "VOICE NOT SUPPORTED",
+
+                new Error(
+                    "เบราว์เซอร์นี้ไม่รองรับ Speech Recognition"
+                )
+
+            );
+
+            return;
+        }
+
+
+        try{
+
+            recognition.start();
+
+        }
+
+        catch(error){
+
+            console.log(
+                error
+            );
+
+        }
+
+    }
+
+);
+
+
+/* =========================================================
+   RESIZE
+========================================================= */
+
+window.addEventListener(
+
+    "resize",
+
+    resizeCanvas
+
+);
+
+
+/* =========================================================
+   VIDEO READY
+========================================================= */
+
+video.addEventListener(
+
+    "loadedmetadata",
+
+    function(){
+
+        resizeCanvas();
+
+        updateCameraInfo();
+
+    }
+
+);
+
+
+/* =========================================================
+   INITIALIZE OBJECT ROWS
+========================================================= */
+
+initObjectRows();
+
+
+/* =========================================================
+   START
+========================================================= */
+
+(async function(){
+
+    await startCamera();
+
+    await loadObjectAI();
+
+})();
+
+</script>
+
+</body>
+</html>

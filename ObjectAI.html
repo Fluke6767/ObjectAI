@@ -9,7 +9,6 @@
 <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.min.js"></script>
 
 <style>
-
 *{
     box-sizing:border-box;
     margin:0;
@@ -18,19 +17,18 @@
 
 :root{
     --bg:#02070d;
-    --panel:rgba(4,15,25,.84);
-    --line:rgba(62,181,255,.22);
-    --blue:#45baff;
-    --cyan:#72e8ff;
-    --green:#48e7a0;
+    --panel:rgba(5,16,27,.88);
+    --line:rgba(65,185,255,.20);
+    --blue:#42baff;
+    --cyan:#70eaff;
+    --green:#48e6a0;
+    --yellow:#ffd65c;
     --red:#ff526b;
-    --yellow:#ffd75e;
-    --text:#dff5ff;
-    --muted:#58758a;
+    --text:#e5f7ff;
+    --muted:#638196;
 }
 
-html,
-body{
+html,body{
     width:100%;
     min-height:100%;
 }
@@ -38,9 +36,9 @@ body{
 body{
     background:
         radial-gradient(
-            circle at 50% -15%,
-            #123c60 0,
-            #061421 32%,
+            circle at 50% -10%,
+            #123b5c 0,
+            #071827 30%,
             #02070d 72%
         );
 
@@ -62,20 +60,20 @@ body::before{
 
     pointer-events:none;
 
-    opacity:.18;
+    opacity:.13;
 
     background:
         linear-gradient(
-            rgba(80,190,255,.025) 1px,
+            rgba(70,190,255,.035) 1px,
             transparent 1px
         ),
         linear-gradient(
             90deg,
-            rgba(80,190,255,.025) 1px,
+            rgba(70,190,255,.035) 1px,
             transparent 1px
         );
 
-    background-size:35px 35px;
+    background-size:32px 32px;
 }
 
 /* =========================
@@ -89,45 +87,41 @@ header{
 
     height:64px;
 
-    padding:0 18px;
+    padding:0 16px;
 
     display:flex;
     align-items:center;
     justify-content:space-between;
 
-    background:rgba(1,7,13,.9);
+    background:rgba(1,7,13,.92);
 
-    backdrop-filter:blur(18px);
+    backdrop-filter:blur(16px);
 
-    border-bottom:
-        1px solid var(--line);
+    border-bottom:1px solid var(--line);
 }
 
 .brand{
     display:flex;
     align-items:center;
-    gap:12px;
+    gap:11px;
 }
 
 .brand-core{
     width:35px;
     height:35px;
 
-    border-radius:50%;
+    border:1px solid var(--blue);
 
-    border:
-        1px solid var(--blue);
+    border-radius:50%;
 
     display:grid;
     place-items:center;
 
-    position:relative;
-
     box-shadow:
-        0 0 18px rgba(69,186,255,.3);
+        0 0 20px rgba(66,186,255,.3);
 }
 
-.brand-core::before{
+.brand-core::after{
     content:"";
 
     width:11px;
@@ -138,52 +132,51 @@ header{
     background:var(--cyan);
 
     box-shadow:
-        0 0 15px var(--cyan);
+        0 0 18px var(--cyan);
 }
 
 .brand-name{
-    font-size:18px;
+    font-size:17px;
     font-weight:900;
-    letter-spacing:3px;
+    letter-spacing:2.5px;
 }
 
 .brand-name span{
     color:var(--blue);
 }
 
-.system-status{
+.status{
     display:flex;
     align-items:center;
-    gap:8px;
+    gap:7px;
 
-    font-size:10px;
+    font:
+        9px monospace;
 
-    letter-spacing:1px;
-
-    color:#8ba8ba;
+    color:#89a6b8;
 }
 
 .status-dot{
-    width:9px;
-    height:9px;
+    width:8px;
+    height:8px;
 
     border-radius:50%;
 
-    background:#465764;
+    background:#45545f;
 }
 
 .status-dot.ready{
     background:var(--green);
 
     box-shadow:
-        0 0 13px var(--green);
+        0 0 12px var(--green);
 }
 
 .status-dot.error{
     background:var(--red);
 
     box-shadow:
-        0 0 13px var(--red);
+        0 0 12px var(--red);
 }
 
 /* =========================
@@ -202,7 +195,7 @@ main{
    CAMERA
 ========================= */
 
-.camera-shell{
+.camera{
     position:relative;
 
     width:100%;
@@ -213,31 +206,26 @@ main{
 
     overflow:hidden;
 
+    background:#000;
+
     border:
         1px solid var(--line);
 
-    border-radius:20px;
-
-    background:#010408;
+    border-radius:18px;
 
     box-shadow:
-        0 25px 70px rgba(0,0,0,.5),
-        inset 0 0 40px rgba(40,170,255,.03);
+        0 20px 60px rgba(0,0,0,.5);
 }
 
 #video{
+    position:absolute;
+
+    inset:0;
+
     width:100%;
     height:100%;
 
-    display:block;
-
     object-fit:cover;
-
-    transform-origin:center center;
-}
-
-.camera-shell.flipped #video{
-    transform:scaleX(-1);
 }
 
 #canvas{
@@ -249,15 +237,121 @@ main{
     height:100%;
 
     pointer-events:none;
-
-    transform:none !important;
 }
 
-.scan-line{
+.camera.mirror #video{
+    transform:scaleX(-1);
+}
+
+.camera.mirror #canvas{
+    transform:scaleX(-1);
+}
+
+.camera-ui{
     position:absolute;
 
-    left:3%;
-    right:3%;
+    inset:0;
+
+    pointer-events:none;
+}
+
+.corner{
+    position:absolute;
+
+    width:38px;
+    height:38px;
+
+    border-color:var(--blue);
+
+    opacity:.9;
+}
+
+.corner.tl{
+    top:14px;
+    left:14px;
+
+    border-top:2px solid;
+    border-left:2px solid;
+}
+
+.corner.tr{
+    top:14px;
+    right:14px;
+
+    border-top:2px solid;
+    border-right:2px solid;
+}
+
+.corner.bl{
+    bottom:14px;
+    left:14px;
+
+    border-bottom:2px solid;
+    border-left:2px solid;
+}
+
+.corner.br{
+    bottom:14px;
+    right:14px;
+
+    border-bottom:2px solid;
+    border-right:2px solid;
+}
+
+.hud{
+    position:absolute;
+
+    top:16px;
+    left:20px;
+    right:20px;
+
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+}
+
+.chip{
+    padding:7px 9px;
+
+    border:
+        1px solid rgba(75,190,255,.22);
+
+    border-radius:7px;
+
+    background:
+        rgba(0,7,13,.65);
+
+    backdrop-filter:blur(7px);
+
+    color:#8fdcff;
+
+    font:
+        9px monospace;
+}
+
+.bottom-hud{
+    position:absolute;
+
+    left:20px;
+    right:20px;
+    bottom:16px;
+
+    display:flex;
+    justify-content:space-between;
+
+    font:
+        9px monospace;
+
+    color:#87a7b9;
+}
+
+.scan{
+    position:absolute;
+
+    left:4%;
+    right:4%;
+
+    top:5%;
 
     height:1px;
 
@@ -265,203 +359,39 @@ main{
         linear-gradient(
             90deg,
             transparent,
-            rgba(76,214,255,.7),
+            rgba(80,220,255,.75),
             transparent
         );
 
     box-shadow:
-        0 0 10px rgba(76,214,255,.8);
+        0 0 12px rgba(80,220,255,.7);
 
     animation:
         scan 4s linear infinite;
 
-    opacity:.55;
-
-    pointer-events:none;
+    opacity:.5;
 }
 
 @keyframes scan{
-
     0%{
-        top:4%;
+        top:5%;
     }
 
     50%{
-        top:96%;
+        top:95%;
     }
 
     100%{
-        top:4%;
+        top:5%;
     }
 }
-
-.corner{
-    position:absolute;
-
-    width:42px;
-    height:42px;
-
-    border-color:var(--blue);
-
-    opacity:.85;
-}
-
-.tl{
-    top:14px;
-    left:14px;
-
-    border-top:2px solid;
-    border-left:2px solid;
-}
-
-.tr{
-    top:14px;
-    right:14px;
-
-    border-top:2px solid;
-    border-right:2px solid;
-}
-
-.bl{
-    bottom:14px;
-    left:14px;
-
-    border-bottom:2px solid;
-    border-left:2px solid;
-}
-
-.br{
-    bottom:14px;
-    right:14px;
-
-    border-bottom:2px solid;
-    border-right:2px solid;
-}
-
-.camera-top{
-    position:absolute;
-
-    top:17px;
-    left:20px;
-    right:20px;
-
-    display:flex;
-    justify-content:space-between;
-
-    pointer-events:none;
-}
-
-.hud-chip{
-    padding:7px 10px;
-
-    border:
-        1px solid rgba(80,190,255,.2);
-
-    border-radius:7px;
-
-    background:
-        rgba(0,7,13,.62);
-
-    backdrop-filter:blur(8px);
-
-    font:10px monospace;
-
-    color:#8fdcff;
-}
-
-.camera-bottom{
-    position:absolute;
-
-    left:20px;
-    right:20px;
-    bottom:17px;
-
-    display:flex;
-    justify-content:space-between;
-
-    pointer-events:none;
-}
-
-.ai-core{
-    position:absolute;
-
-    left:50%;
-    top:50%;
-
-    transform:
-        translate(-50%,-50%);
-
-    width:150px;
-    height:150px;
-
-    opacity:.18;
-
-    pointer-events:none;
-}
-
-.ai-core .ring{
-    position:absolute;
-
-    inset:0;
-
-    border:
-        1px solid var(--blue);
-
-    border-radius:50%;
-
-    animation:
-        rotate 8s linear infinite;
-}
-
-.ai-core .ring:nth-child(2){
-    inset:14px;
-
-    border-style:dashed;
-
-    animation-direction:reverse;
-
-    animation-duration:5s;
-}
-
-.ai-core .ring:nth-child(3){
-    inset:30px;
-
-    border-color:var(--cyan);
-
-    animation-duration:3s;
-}
-
-.ai-core .center{
-    position:absolute;
-
-    inset:58px;
-
-    border-radius:50%;
-
-    background:var(--cyan);
-
-    box-shadow:
-        0 0 25px var(--cyan),
-        0 0 50px rgba(70,210,255,.5);
-}
-
-@keyframes rotate{
-
-    to{
-        transform:rotate(360deg);
-    }
-}
-
-/* =========================
-   LOADER
-========================= */
 
 .loader{
     position:absolute;
 
     inset:0;
 
-    z-index:30;
+    z-index:20;
 
     display:flex;
 
@@ -475,8 +405,8 @@ main{
     background:
         radial-gradient(
             circle,
-            rgba(9,39,60,.96),
-            rgba(1,7,13,.98)
+            rgba(9,40,62,.96),
+            rgba(1,7,13,.99)
         );
 }
 
@@ -485,42 +415,41 @@ main{
 }
 
 .loader-core{
-    width:75px;
-    height:75px;
-
-    border-radius:50%;
+    width:70px;
+    height:70px;
 
     border:
-        1px solid rgba(80,210,255,.35);
+        1px solid rgba(90,210,255,.4);
+
+    border-radius:50%;
 
     display:grid;
     place-items:center;
 
     animation:
-        pulse 2s ease-in-out infinite;
+        pulse 1.8s ease-in-out infinite;
 }
 
 .loader-core::after{
     content:"";
 
-    width:20px;
-    height:20px;
+    width:18px;
+    height:18px;
 
     border-radius:50%;
 
     background:var(--cyan);
 
     box-shadow:
-        0 0 25px var(--cyan);
+        0 0 24px var(--cyan);
 }
 
 @keyframes pulse{
-
     50%{
         transform:scale(1.08);
 
         box-shadow:
-            0 0 40px rgba(70,200,255,.3);
+            0 0 35px rgba(70,210,255,.3);
     }
 }
 
@@ -530,13 +459,16 @@ main{
 }
 
 .loader-text{
-    max-width:340px;
+    max-width:350px;
+
+    padding:0 20px;
 
     text-align:center;
 
-    font:10px monospace;
+    color:#6c8b9e;
 
-    color:#66869a;
+    font:
+        10px monospace;
 
     line-height:1.6;
 }
@@ -551,35 +483,33 @@ main{
     grid-template-columns:
         repeat(4,1fr);
 
-    gap:9px;
+    gap:8px;
 
-    margin-top:12px;
+    margin-top:10px;
 }
 
 button{
-    min-height:46px;
+    min-height:45px;
 
     border:
         1px solid rgba(70,180,255,.22);
 
-    border-radius:10px;
-
-    padding:13px 8px;
-
-    color:#dff5ff;
+    border-radius:9px;
 
     background:
         linear-gradient(
             180deg,
             #153a57,
-            #0a1e31
+            #0a1d2f
         );
 
-    font-size:11px;
+    color:var(--text);
+
+    font-size:10px;
 
     font-weight:900;
 
-    letter-spacing:.5px;
+    letter-spacing:.4px;
 }
 
 button:active{
@@ -595,30 +525,21 @@ button.primary{
         );
 }
 
-button.flip{
-    background:
-        linear-gradient(
-            180deg,
-            #23536d,
-            #102c3d
-        );
-}
-
-button.flip.active{
+button.active{
     border-color:var(--cyan);
 
     color:var(--cyan);
 
     box-shadow:
-        0 0 14px rgba(70,200,255,.2);
+        0 0 14px rgba(70,210,255,.18);
 }
 
 button.danger{
     background:
         linear-gradient(
             180deg,
-            #6d2b3a,
-            #3a151e
+            #702b3c,
+            #39151e
         );
 }
 
@@ -632,36 +553,36 @@ button.danger{
     grid-template-columns:
         repeat(6,1fr);
 
-    gap:9px;
+    gap:8px;
 
-    margin-top:12px;
+    margin-top:10px;
 }
 
-.telemetry-card{
+.metric{
     min-width:0;
 
-    padding:12px;
+    padding:11px;
 
     border:
         1px solid var(--line);
 
-    border-radius:12px;
+    border-radius:11px;
 
     background:var(--panel);
 }
 
-.t-label{
+.metric-label{
     color:var(--muted);
 
     font-size:8px;
 
-    letter-spacing:1.3px;
+    letter-spacing:1.2px;
 
     margin-bottom:5px;
 }
 
-.t-value{
-    font-size:17px;
+.metric-value{
+    font-size:16px;
 
     font-weight:900;
 
@@ -672,12 +593,12 @@ button.danger{
     text-overflow:ellipsis;
 }
 
-.t-unit{
-    font-size:9px;
+.metric-unit{
+    color:#63879a;
 
-    color:#63869b;
+    font-size:8px;
 
-    margin-left:3px;
+    margin-left:2px;
 }
 
 /* =========================
@@ -690,99 +611,50 @@ button.danger{
     grid-template-columns:
         1fr 1fr;
 
-    gap:12px;
+    gap:10px;
 
-    margin-top:12px;
+    margin-top:10px;
 }
 
 .panel{
+    min-width:0;
+
+    padding:13px;
+
     border:
         1px solid var(--line);
 
-    border-radius:14px;
+    border-radius:13px;
 
     background:var(--panel);
-
-    padding:14px;
-
-    min-width:0;
 }
 
 .panel-title{
     display:flex;
 
+    align-items:center;
     justify-content:space-between;
 
-    align-items:center;
+    margin-bottom:10px;
 
-    margin-bottom:12px;
+    color:#65c8ff;
 
     font-size:10px;
 
     font-weight:900;
 
-    letter-spacing:1.6px;
-
-    color:#62c5ff;
+    letter-spacing:1.4px;
 }
 
 .panel-state{
     color:#536f82;
 
-    font-size:8px;
+    font:
+        8px monospace;
 }
 
 /* =========================
-   SYSTEM
-========================= */
-
-.system-list{
-    display:grid;
-
-    gap:7px;
-}
-
-.system-row{
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    padding:9px 10px;
-
-    border-radius:8px;
-
-    background:
-        rgba(255,255,255,.025);
-}
-
-.system-label{
-    font-size:9px;
-
-    color:#6b8799;
-}
-
-.system-value{
-    font-size:10px;
-
-    font-family:monospace;
-}
-
-.good{
-    color:var(--green);
-}
-
-.bad{
-    color:var(--red);
-}
-
-.warn-text{
-    color:var(--yellow);
-}
-
-/* =========================
-   OBJECT LIST
+   OBJECTS
 ========================= */
 
 .objects{
@@ -790,9 +662,9 @@ button.danger{
 
     flex-direction:column;
 
-    gap:7px;
+    gap:6px;
 
-    max-height:250px;
+    max-height:260px;
 
     overflow-y:auto;
 }
@@ -801,18 +673,19 @@ button.danger{
     display:flex;
 
     align-items:center;
-
     justify-content:space-between;
 
-    padding:9px 10px;
+    gap:8px;
+
+    padding:8px 9px;
 
     border-radius:8px;
 
     background:
         linear-gradient(
             90deg,
-            rgba(40,130,190,.11),
-            rgba(40,130,190,.025)
+            rgba(45,140,200,.13),
+            rgba(45,140,200,.025)
         );
 
     border-left:
@@ -824,209 +697,163 @@ button.danger{
 
     align-items:center;
 
-    gap:9px;
+    gap:8px;
 
     min-width:0;
 }
 
-.object-id{
-    color:#4b7c96;
+.object-index{
+    color:#4b7890;
 
-    font:9px monospace;
+    font:
+        9px monospace;
 }
 
 .object-name{
-    font-size:11px;
+    font-size:10px;
 
-    text-transform:none;
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
 }
 
 .object-score{
-    font:900 10px monospace;
+    color:#68d3ff;
 
-    color:#66d0ff;
+    font:
+        900 9px monospace;
 }
 
 .empty{
-    text-align:center;
-
     padding:25px 5px;
 
-    color:#526b7c;
+    text-align:center;
 
-    font-size:10px;
+    color:#536e80;
+
+    font:
+        10px monospace;
+}
+
+/* =========================
+   SYSTEM
+========================= */
+
+.system{
+    display:grid;
+
+    gap:6px;
+}
+
+.system-row{
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:8px 9px;
+
+    border-radius:8px;
+
+    background:
+        rgba(255,255,255,.025);
+}
+
+.system-label{
+    color:#668398;
+
+    font-size:9px;
+}
+
+.system-value{
+    color:#c9e8f5;
+
+    font:
+        9px monospace;
+}
+
+.good{
+    color:var(--green);
+}
+
+.warn{
+    color:var(--yellow);
+}
+
+.bad{
+    color:var(--red);
 }
 
 /* =========================
    GRAPH
 ========================= */
 
-.graph-panel{
-    margin-top:12px;
+.graph{
+    margin-top:10px;
 }
 
-.graph-container{
+.graph canvas{
     width:100%;
 
-    height:180px;
-
-    position:relative;
-
-    background:
-        linear-gradient(
-            rgba(70,180,255,.05) 1px,
-            transparent 1px
-        ),
-        linear-gradient(
-            90deg,
-            rgba(70,180,255,.05) 1px,
-            transparent 1px
-        );
-
-    background-size:
-        40px 30px;
-
-    border-radius:9px;
-
-    overflow:hidden;
-}
-
-#graph{
-    width:100%;
-    height:100%;
+    height:150px;
 
     display:block;
-}
-
-.graph-label{
-    position:absolute;
-
-    top:8px;
-    left:10px;
-
-    font:8px monospace;
-
-    color:#527287;
-}
-
-/* =========================
-   LOG
-========================= */
-
-.log-panel{
-    margin-top:12px;
-}
-
-.log-box{
-    height:160px;
-
-    overflow-y:auto;
-
-    padding:10px;
 
     border-radius:9px;
 
-    background:#010408;
-
-    font:10px/1.7 monospace;
-}
-
-.log-line{
-    color:#617c8e;
-}
-
-.log-line.ok{
-    color:#4fe2a0;
-}
-
-.log-line.warn{
-    color:#ddc05c;
-}
-
-.log-line.error{
-    color:#ff6477;
+    background:
+        rgba(0,0,0,.16);
 }
 
 /* =========================
-   FOOTER
+   RESPONSIVE
 ========================= */
 
-.footer{
-    padding:18px;
-
-    text-align:center;
-
-    color:#385265;
-
-    font:8px monospace;
-
-    letter-spacing:2px;
-}
-
-/* =========================
-   MOBILE
-========================= */
-
-@media(max-width:900px){
+@media(max-width:800px){
 
     .telemetry{
         grid-template-columns:
             repeat(3,1fr);
     }
 
-}
-
-@media(max-width:700px){
-
-    .camera-shell{
-        aspect-ratio:4/3;
-    }
-
     .grid{
         grid-template-columns:1fr;
     }
-
-    .telemetry{
-        grid-template-columns:
-            1fr 1fr;
-    }
-
-    .controls{
-        grid-template-columns:
-            1fr 1fr;
-    }
-
-    .ai-core{
-        width:120px;
-        height:120px;
-    }
-
 }
 
-@media(max-width:400px){
+@media(max-width:500px){
 
     main{
         padding:9px;
     }
 
-    header{
-        padding:0 12px;
+    .camera{
+        min-height:260px;
+
+        aspect-ratio:4/3;
+    }
+
+    .controls{
+        grid-template-columns:
+            repeat(2,1fr);
+    }
+
+    .telemetry{
+        grid-template-columns:
+            repeat(2,1fr);
     }
 
     .brand-name{
-        font-size:15px;
-    }
-
-    .telemetry-card{
-        padding:9px;
-    }
-
-    .t-value{
         font-size:14px;
     }
 
+    .status{
+        font-size:8px;
+    }
 }
-
 </style>
 </head>
 
@@ -1044,7 +871,7 @@ button.danger{
 
     </div>
 
-    <div class="system-status">
+    <div class="status">
 
         <div
             id="statusDot"
@@ -1052,69 +879,58 @@ button.danger{
         </div>
 
         <span id="statusText">
-            OFFLINE
+            INITIALIZING
         </span>
 
     </div>
 
 </header>
 
-
 <main>
 
-<section
-    id="cameraShell"
-    class="camera-shell">
+<section class="camera" id="camera">
 
     <video
         id="video"
         autoplay
-        muted
-        playsinline>
+        playsinline
+        muted>
     </video>
 
-    <canvas
-        id="canvas">
-    </canvas>
+    <canvas id="canvas"></canvas>
 
-    <div class="scan-line"></div>
+    <div class="camera-ui">
 
-    <div class="corner tl"></div>
-    <div class="corner tr"></div>
-    <div class="corner bl"></div>
-    <div class="corner br"></div>
+        <div class="corner tl"></div>
+        <div class="corner tr"></div>
+        <div class="corner bl"></div>
+        <div class="corner br"></div>
 
-    <div class="camera-top">
+        <div class="hud">
 
-        <div class="hud-chip">
-            CAM // <span id="cameraState">OFF</span>
+            <div class="chip">
+                OBJECT DETECTION
+            </div>
+
+            <div class="chip">
+                YOLOv8n · ONNX
+            </div>
+
         </div>
 
-        <div class="hud-chip">
-            AI // <span id="aiState">LOADING</span>
+        <div class="bottom-hud">
+
+            <span id="cameraStatus">
+                CAMERA OFF
+            </span>
+
+            <span id="modelStatus">
+                MODEL OFFLINE
+            </span>
+
         </div>
 
-    </div>
-
-    <div class="camera-bottom">
-
-        <div class="hud-chip">
-            TARGETS // <span id="objectCount">0</span>
-        </div>
-
-        <div class="hud-chip">
-            FPS // <span id="fps">0</span>
-        </div>
-
-    </div>
-
-    <div class="ai-core">
-
-        <div class="ring"></div>
-        <div class="ring"></div>
-        <div class="ring"></div>
-
-        <div class="center"></div>
+        <div class="scan"></div>
 
     </div>
 
@@ -1124,165 +940,275 @@ button.danger{
 
         <div class="loader-core"></div>
 
-        <div
-            id="loaderTitle"
-            class="loader-title">
-
-            JARVIS CORE INITIALIZING
-
+        <div class="loader-title">
+            OBJECT AI
         </div>
 
         <div
             id="loaderText"
             class="loader-text">
-
-            Preparing local vision system...
-
+            Loading neural network...
         </div>
 
     </div>
 
 </section>
-
 
 <div class="controls">
 
     <button
-        id="startButton"
+        id="startBtn"
         class="primary">
+        START CAMERA
+    </button>
 
-        ▶ START
-
+    <button id="stopBtn">
+        STOP
     </button>
 
     <button
-        id="flipButton"
-        class="flip">
-
-        ↔ FLIP
-
+        id="flipBtn"
+        class="active">
+        FLIP CAMERA
     </button>
 
-    <button
-        id="switchButton">
-
-        ◈ SWITCH CAMERA
-
-    </button>
-
-    <button
-        id="stopButton"
-        class="danger">
-
-        ■ STOP
-
+    <button id="pauseBtn">
+        PAUSE AI
     </button>
 
 </div>
-
 
 <section class="telemetry">
 
-    <div class="telemetry-card">
+    <div class="metric">
 
-        <div class="t-label">
-            AI ENGINE
+        <div class="metric-label">
+            FPS
         </div>
 
-        <div
-            id="engine"
-            class="t-value">
-
-            --
-
-        </div>
-
-    </div>
-
-
-    <div class="telemetry-card">
-
-        <div class="t-label">
-            COMPUTE
-        </div>
-
-        <div
-            id="device"
-            class="t-value">
-
-            --
-
-        </div>
-
-    </div>
-
-
-    <div class="telemetry-card">
-
-        <div class="t-label">
-            INFERENCE
-        </div>
-
-        <div class="t-value">
-
-            <span id="inferenceTime">
+        <div class="metric-value">
+            <span id="fps">
                 0
             </span>
 
-            <span class="t-unit">
-                ms
+            <span class="metric-unit">
+                FPS
             </span>
-
         </div>
 
     </div>
 
+    <div class="metric">
 
-    <div class="telemetry-card">
+        <div class="metric-label">
+            INFERENCE
+        </div>
 
-        <div class="t-label">
-            DETECTIONS
+        <div class="metric-value">
+            <span id="inference">
+                0
+            </span>
+
+            <span class="metric-unit">
+                MS
+            </span>
+        </div>
+
+    </div>
+
+    <div class="metric">
+
+        <div class="metric-label">
+            OBJECTS
+        </div>
+
+        <div class="metric-value">
+            <span id="objectCount">
+                0
+            </span>
+        </div>
+
+    </div>
+
+    <div class="metric">
+
+        <div class="metric-label">
+            AI FPS
+        </div>
+
+        <div class="metric-value">
+            <span id="aiFps">
+                0
+            </span>
+        </div>
+
+    </div>
+
+    <div class="metric">
+
+        <div class="metric-label">
+            INPUT
+        </div>
+
+        <div class="metric-value">
+            <span id="inputSize">
+                640
+            </span>
+            <span class="metric-unit">
+                PX
+            </span>
+        </div>
+
+    </div>
+
+    <div class="metric">
+
+        <div class="metric-label">
+            CONFIDENCE
+        </div>
+
+        <div class="metric-value">
+            <span id="confidence">
+                50
+            </span>
+            <span class="metric-unit">
+                %
+            </span>
+        </div>
+
+    </div>
+
+</section>
+
+<section class="grid">
+
+    <div class="panel">
+
+        <div class="panel-title">
+
+            <span>
+                DETECTED OBJECTS
+            </span>
+
+            <span
+                id="objectState"
+                class="panel-state">
+                WAITING
+            </span>
+
         </div>
 
         <div
-            id="totalDetections"
-            class="t-value">
+            id="objects"
+            class="objects">
 
-            0
-
-        </div>
-
-    </div>
-
-
-    <div class="telemetry-card">
-
-        <div class="t-label">
-            TRACKED
-        </div>
-
-        <div
-            id="trackedCount"
-            class="t-value">
-
-            0
+            <div class="empty">
+                No objects detected
+            </div>
 
         </div>
 
     </div>
 
+    <div class="panel">
 
-    <div class="telemetry-card">
+        <div class="panel-title">
 
-        <div class="t-label">
-            VOICE
+            <span>
+                SYSTEM
+            </span>
+
+            <span class="panel-state">
+                LIVE
+            </span>
+
         </div>
 
-        <div
-            id="voiceState"
-            class="t-value">
+        <div class="system">
 
-            THAI
+            <div class="system-row">
+
+                <span class="system-label">
+                    MODEL
+                </span>
+
+                <span
+                    id="sysModel"
+                    class="system-value">
+                    Loading
+                </span>
+
+            </div>
+
+            <div class="system-row">
+
+                <span class="system-label">
+                    CAMERA
+                </span>
+
+                <span
+                    id="sysCamera"
+                    class="system-value">
+                    Offline
+                </span>
+
+            </div>
+
+            <div class="system-row">
+
+                <span class="system-label">
+                    ENGINE
+                </span>
+
+                <span
+                    id="sysEngine"
+                    class="system-value">
+                    ONNX Runtime
+                </span>
+
+            </div>
+
+            <div class="system-row">
+
+                <span class="system-label">
+                    BACKEND
+                </span>
+
+                <span
+                    id="sysBackend"
+                    class="system-value">
+                    Detecting
+                </span>
+
+            </div>
+
+            <div class="system-row">
+
+                <span class="system-label">
+                    DEVICE
+                </span>
+
+                <span
+                    id="sysDevice"
+                    class="system-value">
+                    Browser
+                </span>
+
+            </div>
+
+            <div class="system-row">
+
+                <span class="system-label">
+                    STATUS
+                </span>
+
+                <span
+                    id="sysStatus"
+                    class="system-value warn">
+                    Initializing
+                </span>
+
+            </div>
 
         </div>
 
@@ -1290,784 +1216,82 @@ button.danger{
 
 </section>
 
-
-<div class="grid">
-
-
-<section class="panel">
+<section class="panel graph">
 
     <div class="panel-title">
 
-        SYSTEM CORE
+        <span>
+            PERFORMANCE
+        </span>
 
         <span
-            id="coreState"
+            id="performanceState"
             class="panel-state">
-
-            STANDBY
-
+            MONITORING
         </span>
 
     </div>
 
-
-    <div class="system-list">
-
-        <div class="system-row">
-
-            <span class="system-label">
-                AI ENGINE
-            </span>
-
-            <span
-                id="systemAI"
-                class="system-value">
-
-                --
-
-            </span>
-
-        </div>
-
-
-        <div class="system-row">
-
-            <span class="system-label">
-                ONNX RUNTIME
-            </span>
-
-            <span
-                id="systemONNX"
-                class="system-value">
-
-                --
-
-            </span>
-
-        </div>
-
-
-        <div class="system-row">
-
-            <span class="system-label">
-                MODEL
-            </span>
-
-            <span
-                id="systemModel"
-                class="system-value">
-
-                YOLO26n
-
-            </span>
-
-        </div>
-
-
-        <div class="system-row">
-
-            <span class="system-label">
-                CAMERA
-            </span>
-
-            <span
-                id="systemCamera"
-                class="system-value">
-
-                OFFLINE
-
-            </span>
-
-        </div>
-
-
-        <div class="system-row">
-
-            <span class="system-label">
-                IMAGE
-            </span>
-
-            <span
-                id="imageState"
-                class="system-value">
-
-                NORMAL
-
-            </span>
-
-        </div>
-
-
-        <div class="system-row">
-
-            <span class="system-label">
-                TRACKING
-            </span>
-
-            <span
-                id="trackingState"
-                class="system-value">
-
-                READY
-
-            </span>
-
-        </div>
-
-
-        <div class="system-row">
-
-            <span class="system-label">
-                LAST OBJECT
-            </span>
-
-            <span
-                id="lastObject"
-                class="system-value">
-
-                --
-
-            </span>
-
-        </div>
-
-    </div>
+    <canvas id="graphCanvas"></canvas>
 
 </section>
-
-
-<section class="panel">
-
-    <div class="panel-title">
-
-        TARGET ANALYSIS
-
-        <span class="panel-state">
-            ภาษาไทย
-        </span>
-
-    </div>
-
-
-    <div
-        id="objectList"
-        class="objects">
-
-        <div class="empty">
-            ยังไม่พบวัตถุ
-        </div>
-
-    </div>
-
-</section>
-
-</div>
-
-
-<section class="panel graph-panel">
-
-    <div class="panel-title">
-
-        PERFORMANCE MONITOR
-
-        <span
-            id="graphState"
-            class="panel-state">
-
-            WAITING
-
-        </span>
-
-    </div>
-
-    <div class="graph-container">
-
-        <canvas
-            id="graph">
-        </canvas>
-
-        <div class="graph-label">
-            FPS / INFERENCE
-        </div>
-
-    </div>
-
-</section>
-
-
-<section class="panel log-panel">
-
-    <div class="panel-title">
-
-        JARVIS MONITOR
-
-        <span
-            id="monitorState"
-            class="panel-state">
-
-            SYSTEM ONLINE
-
-        </span>
-
-    </div>
-
-
-    <div
-        id="logBox"
-        class="log-box">
-
-    </div>
-
-</section>
-
-
-<div class="footer">
-
-    OBJECT AI · JARVIS VISION CORE · LOCAL INFERENCE · THAI AI
-
-</div>
 
 </main>
-
 
 <script>
 
 /* =========================================================
+   OBJECT AI
+   YOLOv8n + ONNX Runtime Web
+========================================================= */
+
+/* =========================
    CONFIG
-========================================================= */
+========================= */
 
-const MODEL_URL =
-    "./models/yolo26n.onnx";
+const CONFIG = {
 
-const INPUT_SIZE =
-    640;
+    MODEL_URL:
+        "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n.onnx",
 
-const CONFIDENCE =
-    0.30;
+    INPUT_SIZE:
+        640,
 
+    CONFIDENCE:
+        0.50,
 
-/* =========================================================
-   DOM
-========================================================= */
+    IOU:
+        0.45,
 
-const video =
-    document.getElementById(
-        "video"
-    );
+    MAX_DETECTIONS:
+        40,
 
-const canvas =
-    document.getElementById(
-        "canvas"
-    );
+    START_AI_FPS:
+        12,
 
-const ctx =
-    canvas.getContext(
-        "2d"
-    );
+    MIN_AI_FPS:
+        5,
 
-const graph =
-    document.getElementById(
-        "graph"
-    );
+    MAX_AI_FPS:
+        15,
 
-const graphCtx =
-    graph.getContext(
-        "2d"
-    );
+    MIN_INPUT:
+        320,
 
-const cameraShell =
-    document.getElementById(
-        "cameraShell"
-    );
+    MAX_INPUT:
+        640,
 
-const statusDot =
-    document.getElementById(
-        "statusDot"
-    );
-
-const statusText =
-    document.getElementById(
-        "statusText"
-    );
-
-const cameraState =
-    document.getElementById(
-        "cameraState"
-    );
-
-const aiState =
-    document.getElementById(
-        "aiState"
-    );
-
-const objectCount =
-    document.getElementById(
-        "objectCount"
-    );
-
-const fpsElement =
-    document.getElementById(
-        "fps"
-    );
-
-const engine =
-    document.getElementById(
-        "engine"
-    );
-
-const device =
-    document.getElementById(
-        "device"
-    );
-
-const inferenceTime =
-    document.getElementById(
-        "inferenceTime"
-    );
-
-const totalDetections =
-    document.getElementById(
-        "totalDetections"
-    );
-
-const trackedCount =
-    document.getElementById(
-        "trackedCount"
-    );
-
-const voiceState =
-    document.getElementById(
-        "voiceState"
-    );
-
-const systemAI =
-    document.getElementById(
-        "systemAI"
-    );
-
-const systemONNX =
-    document.getElementById(
-        "systemONNX"
-    );
-
-const systemCamera =
-    document.getElementById(
-        "systemCamera"
-    );
-
-const imageState =
-    document.getElementById(
-        "imageState"
-    );
-
-const trackingState =
-    document.getElementById(
-        "trackingState"
-    );
-
-const lastObject =
-    document.getElementById(
-        "lastObject"
-    );
-
-const coreState =
-    document.getElementById(
-        "coreState"
-    );
-
-const monitorState =
-    document.getElementById(
-        "monitorState"
-    );
-
-const graphState =
-    document.getElementById(
-        "graphState"
-    );
-
-const objectList =
-    document.getElementById(
-        "objectList"
-    );
-
-const loader =
-    document.getElementById(
-        "loader"
-    );
-
-const loaderTitle =
-    document.getElementById(
-        "loaderTitle"
-    );
-
-const loaderText =
-    document.getElementById(
-        "loaderText"
-    );
-
-const logBox =
-    document.getElementById(
-        "logBox"
-    );
-
-const startButton =
-    document.getElementById(
-        "startButton"
-    );
-
-const flipButton =
-    document.getElementById(
-        "flipButton"
-    );
-
-const switchButton =
-    document.getElementById(
-        "switchButton"
-    );
-
-const stopButton =
-    document.getElementById(
-        "stopButton"
-    );
-
-
-/* =========================================================
-   STATE
-========================================================= */
-
-let session =
-    null;
-
-let stream =
-    null;
-
-let running =
-    false;
-
-let busy =
-    false;
-
-let animationId =
-    null;
-
-let facing =
-    "environment";
-
-let flipped =
-    false;
-
-let total =
-    0;
-
-let frameCounter =
-    0;
-
-let fpsTimer =
-    performance.now();
-
-let inferenceProvider =
-    "unknown";
-
-
-/* =========================================================
-   TRACKING
-========================================================= */
-
-let nextTrackId =
-    1;
-
-let tracks =
-    [];
-
-const MAX_TRACK_DISTANCE =
-    140;
-
-const MAX_MISSED_FRAMES =
-    12;
-
-
-/* =========================================================
-   PERFORMANCE GRAPH
-========================================================= */
-
-const fpsHistory =
-    [];
-
-const inferenceHistory =
-    [];
-
-const MAX_GRAPH_POINTS =
-    60;
-
-
-/* =========================================================
-   THAI OBJECT NAMES
-========================================================= */
-
-const THAI_NAMES = {
-
-    "person":
-        "คน",
-
-    "bicycle":
-        "จักรยาน",
-
-    "car":
-        "รถยนต์",
-
-    "motorcycle":
-        "รถจักรยานยนต์",
-
-    "airplane":
-        "เครื่องบิน",
-
-    "bus":
-        "รถบัส",
-
-    "train":
-        "รถไฟ",
-
-    "truck":
-        "รถบรรทุก",
-
-    "boat":
-        "เรือ",
-
-    "traffic light":
-        "ไฟจราจร",
-
-    "fire hydrant":
-        "หัวจ่ายน้ำดับเพลิง",
-
-    "stop sign":
-        "ป้ายหยุด",
-
-    "parking meter":
-        "มิเตอร์จอดรถ",
-
-    "bench":
-        "ม้านั่ง",
-
-    "bird":
-        "นก",
-
-    "cat":
-        "แมว",
-
-    "dog":
-        "สุนัข",
-
-    "horse":
-        "ม้า",
-
-    "sheep":
-        "แกะ",
-
-    "cow":
-        "วัว",
-
-    "elephant":
-        "ช้าง",
-
-    "bear":
-        "หมี",
-
-    "zebra":
-        "ม้าลาย",
-
-    "giraffe":
-        "ยีราฟ",
-
-    "backpack":
-        "กระเป๋าเป้",
-
-    "umbrella":
-        "ร่ม",
-
-    "handbag":
-        "กระเป๋าถือ",
-
-    "tie":
-        "เนกไท",
-
-    "suitcase":
-        "กระเป๋าเดินทาง",
-
-    "frisbee":
-        "จานร่อน",
-
-    "skis":
-        "สกี",
-
-    "snowboard":
-        "สโนว์บอร์ด",
-
-    "sports ball":
-        "ลูกบอลกีฬา",
-
-    "kite":
-        "ว่าว",
-
-    "baseball bat":
-        "ไม้เบสบอล",
-
-    "baseball glove":
-        "ถุงมือเบสบอล",
-
-    "skateboard":
-        "สเก็ตบอร์ด",
-
-    "surfboard":
-        "กระดานโต้คลื่น",
-
-    "tennis racket":
-        "ไม้เทนนิส",
-
-    "bottle":
-        "ขวด",
-
-    "wine glass":
-        "แก้วไวน์",
-
-    "cup":
-        "ถ้วย",
-
-    "fork":
-        "ส้อม",
-
-    "knife":
-        "มีด",
-
-    "spoon":
-        "ช้อน",
-
-    "bowl":
-        "ชาม",
-
-    "banana":
-        "กล้วย",
-
-    "apple":
-        "แอปเปิล",
-
-    "sandwich":
-        "แซนด์วิช",
-
-    "orange":
-        "ส้ม",
-
-    "broccoli":
-        "บรอกโคลี",
-
-    "carrot":
-        "แครอท",
-
-    "hot dog":
-        "ฮอตดอก",
-
-    "pizza":
-        "พิซซ่า",
-
-    "donut":
-        "โดนัท",
-
-    "cake":
-        "เค้ก",
-
-    "chair":
-        "เก้าอี้",
-
-    "couch":
-        "โซฟา",
-
-    "potted plant":
-        "ต้นไม้กระถาง",
-
-    "bed":
-        "เตียง",
-
-    "dining table":
-        "โต๊ะอาหาร",
-
-    "toilet":
-        "ห้องน้ำ",
-
-    "tv":
-        "โทรทัศน์",
-
-    "laptop":
-        "แล็ปท็อป",
-
-    "mouse":
-        "เมาส์",
-
-    "remote":
-        "รีโมต",
-
-    "keyboard":
-        "คีย์บอร์ด",
-
-    "cell phone":
-        "โทรศัพท์มือถือ",
-
-    "microwave":
-        "ไมโครเวฟ",
-
-    "oven":
-        "เตาอบ",
-
-    "toaster":
-        "เครื่องปิ้งขนมปัง",
-
-    "sink":
-        "อ่างล้างจาน",
-
-    "refrigerator":
-        "ตู้เย็น",
-
-    "book":
-        "หนังสือ",
-
-    "clock":
-        "นาฬิกา",
-
-    "vase":
-        "แจกัน",
-
-    "scissors":
-        "กรรไกร",
-
-    "teddy bear":
-        "ตุ๊กตาหมี",
-
-    "hair drier":
-        "ไดร์เป่าผม",
-
-    "toothbrush":
-        "แปรงสีฟัน"
+    ADAPTIVE:
+        true
 
 };
 
 
-function thaiName(
-    english
-){
-
-    return (
-        THAI_NAMES[
-            english
-        ] ||
-        english
-    );
-
-}
-
-
-/* =========================================================
+/* =========================
    COCO CLASSES
-========================================================= */
+========================= */
 
-const CLASS_NAMES = [
+const CLASSES = [
 
     "person",
     "bicycle",
@@ -2153,336 +1377,296 @@ const CLASS_NAMES = [
 ];
 
 
-/* =========================================================
-   LOG
-========================================================= */
+/* =========================
+   DOM
+========================= */
 
-function log(
-    message,
-    type=""
-){
+const video =
+    document.getElementById("video");
 
-    const line =
-        document.createElement(
-            "div"
-        );
+const canvas =
+    document.getElementById("canvas");
 
-    line.className =
-        "log-line " +
-        type;
+const ctx =
+    canvas.getContext("2d", {
+        alpha:true
+    });
 
-    const time =
-        new Date()
-            .toLocaleTimeString(
-                "th-TH"
-            );
+const graphCanvas =
+    document.getElementById("graphCanvas");
 
-    line.textContent =
-        "[" +
-        time +
-        "] " +
-        message;
+const graphCtx =
+    graphCanvas.getContext("2d");
 
-    logBox.appendChild(
-        line
-    );
+const camera =
+    document.getElementById("camera");
 
-    while(
-        logBox.children.length >
-        100
-    ){
+const loader =
+    document.getElementById("loader");
 
-        logBox.removeChild(
-            logBox.firstChild
-        );
+const loaderText =
+    document.getElementById("loaderText");
 
-    }
+const objectsEl =
+    document.getElementById("objects");
 
-    logBox.scrollTop =
-        logBox.scrollHeight;
-}
+const statusDot =
+    document.getElementById("statusDot");
+
+const statusText =
+    document.getElementById("statusText");
 
 
-/* =========================================================
+/* =========================
+   STATE
+========================= */
+
+let session =
+    null;
+
+let stream =
+    null;
+
+let running =
+    false;
+
+let paused =
+    false;
+
+let processing =
+    false;
+
+let mirror =
+    true;
+
+let lastFrameTime =
+    performance.now();
+
+let lastInferenceTime =
+    0;
+
+let fps =
+    0;
+
+let aiFps =
+    0;
+
+let frameCounter =
+    0;
+
+let inferenceCounter =
+    0;
+
+let fpsTimer =
+    performance.now();
+
+let aiFpsTimer =
+    performance.now();
+
+let aiTargetFps =
+    CONFIG.START_AI_FPS;
+
+let inputSize =
+    CONFIG.INPUT_SIZE;
+
+let lastDetections =
+    [];
+
+let performanceHistory =
+    [];
+
+let adaptiveTimer =
+    0;
+
+let cameraFacing =
+    "user";
+
+
+/* =========================
+   TEMP CANVAS
+========================= */
+
+const inputCanvas =
+    document.createElement("canvas");
+
+const inputCtx =
+    inputCanvas.getContext("2d", {
+        willReadFrequently:true
+    });
+
+
+/* =========================
    STATUS
-========================================================= */
+========================= */
 
 function setStatus(
     text,
-    state=""
+    type=""
 ){
 
     statusText.textContent =
         text;
 
     statusDot.className =
-        "status-dot " +
-        state;
+        "status-dot " + type;
+
 }
 
 
-/* =========================================================
+/* =========================
    LOADER
-========================================================= */
+========================= */
 
-function showLoader(
-    title,
+function loaderMessage(
     text
 ){
-
-    loaderTitle.textContent =
-        title;
 
     loaderText.textContent =
         text;
 
-    loader.classList.remove(
-        "hidden"
-    );
 }
 
 
-function hideLoader(){
+/* =========================
+   MODEL LOAD
+========================= */
 
-    loader.classList.add(
-        "hidden"
-    );
-
-}
-
-
-/* =========================================================
-   ONNX SESSION
-========================================================= */
-
-async function createSession(){
-
-    if(
-        "gpu" in navigator
-    ){
-
-        try{
-
-            log(
-                "กำลังตรวจสอบ WebGPU...",
-                "ok"
-            );
-
-            session =
-                await ort.InferenceSession.create(
-                    MODEL_URL,
-                    {
-                        executionProviders:[
-                            "webgpu"
-                        ],
-
-                        graphOptimizationLevel:
-                            "all"
-                    }
-                );
-
-            inferenceProvider =
-                "WebGPU";
-
-            device.textContent =
-                "WEBGPU";
-
-            systemAI.textContent =
-                "ONLINE";
-
-            systemAI.className =
-                "system-value good";
-
-            log(
-                "WebGPU พร้อมใช้งาน",
-                "ok"
-            );
-
-            return;
-
-        }catch(error){
-
-            log(
-                "WebGPU ใช้งานไม่ได้ → ใช้ WASM",
-                "warn"
-            );
-
-        }
-
-    }
-
-
-    ort.env.wasm.numThreads =
-        Math.min(
-            4,
-            navigator.hardwareConcurrency ||
-            2
-        );
-
-
-    session =
-        await ort.InferenceSession.create(
-            MODEL_URL,
-            {
-                executionProviders:[
-                    "wasm"
-                ],
-
-                graphOptimizationLevel:
-                    "all"
-            }
-        );
-
-
-    inferenceProvider =
-        "WASM";
-
-
-    device.textContent =
-        "WASM";
-
-
-    systemAI.textContent =
-        "ONLINE";
-
-
-    systemAI.className =
-        "system-value good";
-
-
-    log(
-        "WASM CPU inference พร้อมใช้งาน",
-        "ok"
-    );
-
-}
-
-
-/* =========================================================
-   LOAD AI
-========================================================= */
-
-async function loadAI(){
+async function loadModel(){
 
     try{
 
-        showLoader(
-            "JARVIS CORE INITIALIZING",
-            "กำลังตรวจสอบโมเดล YOLO26n..."
-        );
-
-        log(
-            "OBJECT AI starting..."
-        );
-
         setStatus(
-            "LOADING"
+            "LOADING MODEL"
         );
 
-        aiState.textContent =
-            "LOADING";
-
-
-        const response =
-            await fetch(
-                MODEL_URL,
-                {
-                    method:"HEAD"
-                }
-            );
-
+        loaderMessage(
+            "Downloading YOLOv8 neural network..."
+        );
 
         if(
-            !response.ok
+            !window.ort
         ){
 
             throw new Error(
-                "ไม่พบโมเดล: " +
-                MODEL_URL +
-                " (" +
-                response.status +
-                ")"
+                "ONNX Runtime failed to load"
             );
 
         }
 
+        /*
+         * WebGPU is attempted first.
+         * WASM is used as reliable fallback.
+         */
 
-        log(
-            "พบโมเดล YOLO26n ในเครื่อง",
-            "ok"
+        let providers = [];
+
+        if(
+            navigator.gpu
+        ){
+
+            providers.push(
+                "webgpu"
+            );
+
+        }
+
+        providers.push(
+            "wasm"
         );
 
+        for(
+            const provider
+            of providers
+        ){
 
-        showLoader(
-            "INITIALIZING AI CORE",
-            "กำลังเริ่ม ONNX Runtime..."
+            try{
+
+                loaderMessage(
+                    "Starting ONNX backend: " +
+                    provider
+                );
+
+                session =
+                    await ort.InferenceSession.create(
+                        CONFIG.MODEL_URL,
+                        {
+                            executionProviders:[
+                                provider
+                            ],
+
+                            graphOptimizationLevel:
+                                "all"
+                        }
+                    );
+
+                document.getElementById(
+                    "sysBackend"
+                ).textContent =
+                    provider.toUpperCase();
+
+                break;
+
+            }catch(
+                error
+            ){
+
+                console.warn(
+                    provider,
+                    error
+                );
+
+                session =
+                    null;
+
+            }
+
+        }
+
+        if(
+            !session
+        ){
+
+            throw new Error(
+                "No ONNX backend available"
+            );
+
+        }
+
+        document.getElementById(
+            "sysModel"
+        ).textContent =
+            "YOLOv8n";
+
+        document.getElementById(
+            "modelStatus"
+        ).textContent =
+            "MODEL READY";
+
+        loaderMessage(
+            "Neural network ready."
         );
-
-
-        await createSession();
-
-
-        engine.textContent =
-            "YOLO26n";
-
-
-        aiState.textContent =
-            "READY";
-
-
-        systemONNX.textContent =
-            "ONLINE";
-
-
-        systemONNX.className =
-            "system-value good";
-
-
-        coreState.textContent =
-            "READY";
-
-
-        monitorState.textContent =
-            "AI READY";
-
-
-        trackingState.textContent =
-            "READY";
-
 
         setStatus(
-            "AI READY",
+            "MODEL READY",
             "ready"
         );
 
+        setTimeout(
+            () => {
 
-        hideLoader();
+                if(
+                    !running
+                ){
 
+                    loader.classList.remove(
+                        "hidden"
+                    );
 
-        log(
-            "YOLO26n พร้อมใช้งาน",
-            "ok"
+                }
+
+            },
+            300
         );
-
-
-        log(
-            "Inference engine: " +
-            inferenceProvider,
-            "ok"
-        );
-
-
-        log(
-            "ระบบ Tracking พร้อมใช้งาน",
-            "ok"
-        );
-
-
-        log(
-            "ระบบเสียงภาษาไทยพร้อมใช้งาน",
-            "ok"
-        );
-
 
     }catch(error){
 
@@ -2490,43 +1674,23 @@ async function loadAI(){
             error
         );
 
+        setStatus(
+            "MODEL ERROR",
+            "error"
+        );
 
-        aiState.textContent =
-            "ERROR";
+        document.getElementById(
+            "sysStatus"
+        ).textContent =
+            "Model error";
 
-
-        systemAI.textContent =
-            "ERROR";
-
-
-        systemAI.className =
+        document.getElementById(
+            "sysStatus"
+        ).className =
             "system-value bad";
 
-
-        setStatus(
-            "AI ERROR",
-            "error"
-        );
-
-
-        monitorState.textContent =
-            "ERROR";
-
-
-        showLoader(
-            "AI CORE ERROR",
-            error.message ||
-            "Unknown error"
-        );
-
-
-        log(
-            "AI ERROR: " +
-            (
-                error.message ||
-                error
-            ),
-            "error"
+        loaderMessage(
+            "Model failed to load. Check internet connection and reload."
         );
 
     }
@@ -2534,9 +1698,9 @@ async function loadAI(){
 }
 
 
-/* =========================================================
+/* =========================
    CAMERA
-========================================================= */
+========================= */
 
 async function startCamera(){
 
@@ -2544,108 +1708,111 @@ async function startCamera(){
         !session
     ){
 
-        log(
-            "AI Core ยังไม่พร้อม",
-            "warn"
+        loader.classList.remove(
+            "hidden"
+        );
+
+        loaderMessage(
+            "AI model is not ready."
         );
 
         return;
 
     }
 
-
     try{
 
-        stopCamera(
-            false
+        stopCamera();
+
+        loader.classList.remove(
+            "hidden"
         );
 
-
-        log(
-            "กำลังเปิดกล้อง..."
+        loaderMessage(
+            "Starting camera..."
         );
-
 
         stream =
-            await navigator
-                .mediaDevices
-                .getUserMedia({
+            await navigator.mediaDevices.getUserMedia({
 
-                    video:{
-                        facingMode:{
-                            ideal:facing
-                        },
+                video:{
+                    facingMode:
+                        cameraFacing,
 
-                        width:{
-                            ideal:1280
-                        },
-
-                        height:{
-                            ideal:720
-                        },
-
-                        frameRate:{
-                            ideal:30
-                        }
+                    width:{
+                        ideal:1280
                     },
 
-                    audio:false
+                    height:{
+                        ideal:720
+                    },
 
-                });
+                    frameRate:{
+                        ideal:30,
 
+                        max:30
+                    }
+                },
+
+                audio:false
+
+            });
 
         video.srcObject =
             stream;
 
-
         await video.play();
-
-
-        canvas.width =
-            video.videoWidth;
-
-        canvas.height =
-            video.videoHeight;
-
 
         running =
             true;
 
+        paused =
+            false;
 
-        cameraState.textContent =
-            "ONLINE";
+        document.getElementById(
+            "cameraStatus"
+        ).textContent =
+            "CAMERA ONLINE";
 
+        document.getElementById(
+            "modelStatus"
+        ).textContent =
+            "MODEL ONLINE";
 
-        systemCamera.textContent =
-            "ONLINE";
+        document.getElementById(
+            "sysCamera"
+        ).textContent =
+            "Online";
 
-
-        systemCamera.className =
+        document.getElementById(
+            "sysCamera"
+        ).className =
             "system-value good";
 
+        document.getElementById(
+            "sysStatus"
+        ).textContent =
+            "Running";
 
-        coreState.textContent =
-            "ACTIVE";
+        document.getElementById(
+            "sysStatus"
+        ).className =
+            "system-value good";
 
-
-        monitorState.textContent =
-            "VISION ACTIVE";
-
+        loader.classList.add(
+            "hidden"
+        );
 
         setStatus(
-            "ONLINE",
+            "AI ONLINE",
             "ready"
         );
 
+        resizeCanvas();
 
-        log(
-            "กล้องออนไลน์",
-            "ok"
+        requestAnimationFrame(
+            detectionLoop
         );
-
-
-        detectLoop();
-
 
     }catch(error){
 
@@ -2653,32 +1820,25 @@ async function startCamera(){
             error
         );
 
-
-        cameraState.textContent =
-            "ERROR";
-
-
-        systemCamera.textContent =
-            "ERROR";
-
-
-        systemCamera.className =
-            "system-value bad";
-
+        running =
+            false;
 
         setStatus(
             "CAMERA ERROR",
             "error"
         );
 
+        document.getElementById(
+            "cameraStatus"
+        ).textContent =
+            "CAMERA ERROR";
 
-        log(
-            "Camera ERROR: " +
-            (
-                error.message ||
-                error
-            ),
-            "error"
+        loader.classList.remove(
+            "hidden"
+        );
+
+        loaderMessage(
+            "Camera permission was denied or camera is unavailable."
         );
 
     }
@@ -2686,1335 +1846,827 @@ async function startCamera(){
 }
 
 
-function stopCamera(
-    writeLog=true
-){
+/* =========================
+   STOP CAMERA
+========================= */
+
+function stopCamera(){
 
     running =
         false;
 
-    busy =
+    processing =
         false;
 
-
     if(
-        animationId
+        stream
     ){
 
-        cancelAnimationFrame(
-            animationId
+        stream.getTracks().forEach(
+            track => track.stop()
         );
-
-        animationId =
-            null;
-    }
-
-
-    if(
-        stream
-    ){
-
-        stream
-            .getTracks()
-            .forEach(
-                track =>
-                    track.stop()
-            );
 
         stream =
             null;
-    }
 
+    }
 
     video.srcObject =
         null;
 
+    document.getElementById(
+        "cameraStatus"
+    ).textContent =
+        "CAMERA OFF";
 
-    cameraState.textContent =
-        "OFF";
+    document.getElementById(
+        "sysCamera"
+    ).textContent =
+        "Offline";
 
-
-    systemCamera.textContent =
-        "OFFLINE";
-
-
-    systemCamera.className =
+    document.getElementById(
+        "sysCamera"
+    ).className =
         "system-value";
 
-
-    objectCount.textContent =
-        "0";
-
-
-    trackedCount.textContent =
-        "0";
-
-
-    fpsElement.textContent =
-        "0";
-
-
-    clearCanvas();
-
-
-    resetTracks();
-
-
-    coreState.textContent =
-        session ?
-        "READY" :
-        "STANDBY";
-
-
-    monitorState.textContent =
-        session ?
-        "AI READY" :
-        "OFFLINE";
-
-
-    if(
-        session
-    ){
-
-        setStatus(
-            "AI READY",
-            "ready"
-        );
-
-    }else{
-
-        setStatus(
-            "OFFLINE"
-        );
-
-    }
-
-
-    if(
-        writeLog
-    ){
-
-        log(
-            "หยุดกล้องแล้ว"
-        );
-
-    }
+    clearOverlay();
 
 }
 
 
-/* =========================================================
-   SWITCH CAMERA
-========================================================= */
+/* =========================
+   RESIZE
+========================= */
 
-async function switchCamera(){
-
-    facing =
-        facing === "environment"
-        ? "user"
-        : "environment";
-
-
-    log(
-        "กำลังเปลี่ยนกล้อง..."
-    );
-
+function resizeCanvas(){
 
     if(
-        running
+        !video.videoWidth ||
+        !video.videoHeight
     ){
 
-        await startCamera();
+        return;
 
     }
 
-}
-
-
-/* =========================================================
-   FLIP
-========================================================= */
-
-function toggleFlip(){
-
-    flipped =
-        !flipped;
-
-
-    if(
-        flipped
-    ){
-
-        cameraShell.classList.add(
-            "flipped"
-        );
-
-
-        flipButton.classList.add(
-            "active"
-        );
-
-
-        flipButton.textContent =
-            "↔ FLIP: ON";
-
-
-        imageState.textContent =
-            "MIRRORED";
-
-
-        imageState.className =
-            "system-value good";
-
-
-        log(
-            "กลับภาพกล้องแล้ว",
-            "ok"
-        );
-
-
-    }else{
-
-        cameraShell.classList.remove(
-            "flipped"
-        );
-
-
-        flipButton.classList.remove(
-            "active"
-        );
-
-
-        flipButton.textContent =
-            "↔ FLIP";
-
-
-        imageState.textContent =
-            "NORMAL";
-
-
-        imageState.className =
-            "system-value";
-
-
-        log(
-            "คืนภาพกล้องเป็นปกติ",
-            "ok"
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   PREPROCESS
-========================================================= */
-
-function preprocess(){
-
-    const sourceWidth =
+    canvas.width =
         video.videoWidth;
 
-
-    const sourceHeight =
+    canvas.height =
         video.videoHeight;
 
+}
+
+
+/* =========================
+   LETTERBOX
+========================= */
+
+function prepareInput(){
+
+    const w =
+        video.videoWidth;
+
+    const h =
+        video.videoHeight;
+
+    if(
+        !w ||
+        !h
+    ){
+
+        return null;
+
+    }
+
+    inputCanvas.width =
+        inputSize;
+
+    inputCanvas.height =
+        inputSize;
+
+    inputCtx.fillStyle =
+        "#000";
+
+    inputCtx.fillRect(
+        0,
+        0,
+        inputSize,
+        inputSize
+    );
 
     const scale =
         Math.min(
-            INPUT_SIZE /
-            sourceWidth,
-
-            INPUT_SIZE /
-            sourceHeight
+            inputSize / w,
+            inputSize / h
         );
 
-
-    const resizedWidth =
+    const newW =
         Math.round(
-            sourceWidth *
-            scale
+            w * scale
         );
 
-
-    const resizedHeight =
+    const newH =
         Math.round(
-            sourceHeight *
-            scale
+            h * scale
         );
 
-
-    const padX =
+    const offsetX =
         Math.floor(
-            (
-                INPUT_SIZE -
-                resizedWidth
-            ) / 2
+            (inputSize - newW) / 2
         );
 
-
-    const padY =
+    const offsetY =
         Math.floor(
-            (
-                INPUT_SIZE -
-                resizedHeight
-            ) / 2
+            (inputSize - newH) / 2
         );
 
-
-    const offscreen =
-        document.createElement(
-            "canvas"
-        );
-
-
-    offscreen.width =
-        INPUT_SIZE;
-
-
-    offscreen.height =
-        INPUT_SIZE;
-
-
-    const octx =
-        offscreen.getContext(
-            "2d",
-            {
-                willReadFrequently:true
-            }
-        );
-
-
-    octx.fillStyle =
-        "#808080";
-
-
-    octx.fillRect(
-        0,
-        0,
-        INPUT_SIZE,
-        INPUT_SIZE
-    );
-
-
-    octx.drawImage(
+    inputCtx.drawImage(
         video,
-
         0,
         0,
-
-        sourceWidth,
-        sourceHeight,
-
-        padX,
-        padY,
-
-        resizedWidth,
-        resizedHeight
+        w,
+        h,
+        offsetX,
+        offsetY,
+        newW,
+        newH
     );
-
 
     const imageData =
-        octx.getImageData(
+        inputCtx.getImageData(
             0,
             0,
-            INPUT_SIZE,
-            INPUT_SIZE
+            inputSize,
+            inputSize
         );
-
 
     const data =
-        imageData.data;
-
-
-    const area =
-        INPUT_SIZE *
-        INPUT_SIZE;
-
-
-    const input =
         new Float32Array(
-            area * 3
+            3 *
+            inputSize *
+            inputSize
         );
 
+    const plane =
+        inputSize *
+        inputSize;
+
+    let r =
+        0;
+
+    let g =
+        plane;
+
+    let b =
+        plane * 2;
 
     for(
-        let i=0,p=0;
-        i<area;
-        i++,p+=4
+        let i=0;
+        i<imageData.data.length;
+        i+=4
     ){
 
-        input[i] =
-            data[p] / 255;
+        data[r++] =
+            imageData.data[i] / 255;
 
+        data[g++] =
+            imageData.data[i+1] / 255;
 
-        input[
-            area+i
-        ] =
-            data[p+1] / 255;
-
-
-        input[
-            area*2+i
-        ] =
-            data[p+2] / 255;
+        data[b++] =
+            imageData.data[i+2] / 255;
 
     }
 
-
-    return{
-
+    return {
         tensor:
             new ort.Tensor(
                 "float32",
-                input,
+                data,
                 [
                     1,
                     3,
-                    INPUT_SIZE,
-                    INPUT_SIZE
+                    inputSize,
+                    inputSize
                 ]
             ),
 
         scale,
-        padX,
-        padY,
-        sourceWidth,
-        sourceHeight
+        offsetX,
+        offsetY,
+        sourceWidth:w,
+        sourceHeight:h
 
     };
 
 }
 
 
-/* =========================================================
-   DISTANCE
-========================================================= */
+/* =========================
+   IOU
+========================= */
 
-function centerOf(
-    d
-){
-
-    return{
-
-        x:
-            (
-                d.x1 +
-                d.x2
-            ) / 2,
-
-        y:
-            (
-                d.y1 +
-                d.y2
-            ) / 2
-
-    };
-
-}
-
-
-function distance(
+function boxIOU(
     a,
     b
 ){
 
-    const dx =
-        a.x -
-        b.x;
+    const x1 =
+        Math.max(
+            a.x1,
+            b.x1
+        );
 
-    const dy =
-        a.y -
-        b.y;
+    const y1 =
+        Math.max(
+            a.y1,
+            b.y1
+        );
 
-    return Math.sqrt(
-        dx*dx +
-        dy*dy
+    const x2 =
+        Math.min(
+            a.x2,
+            b.x2
+        );
+
+    const y2 =
+        Math.min(
+            a.y2,
+            b.y2
+        );
+
+    const w =
+        Math.max(
+            0,
+            x2-x1
+        );
+
+    const h =
+        Math.max(
+            0,
+            y2-y1
+        );
+
+    const intersection =
+        w*h;
+
+    const areaA =
+        Math.max(
+            0,
+            a.x2-a.x1
+        ) *
+        Math.max(
+            0,
+            a.y2-a.y1
+        );
+
+    const areaB =
+        Math.max(
+            0,
+            b.x2-b.x1
+        ) *
+        Math.max(
+            0,
+            b.y2-b.y1
+        );
+
+    return intersection /
+        (
+            areaA +
+            areaB -
+            intersection +
+            1e-6
+        );
+
+}
+
+
+/* =========================
+   NMS
+========================= */
+
+function nms(
+    detections
+){
+
+    detections.sort(
+        (
+            a,
+            b
+        ) =>
+            b.score -
+            a.score
+    );
+
+    const result = [];
+
+    while(
+        detections.length
+    ){
+
+        const current =
+            detections.shift();
+
+        result.push(
+            current
+        );
+
+        if(
+            result.length >=
+            CONFIG.MAX_DETECTIONS
+        ){
+
+            break;
+
+        }
+
+        detections =
+            detections.filter(
+                item => {
+
+                    if(
+                        item.classId !==
+                        current.classId
+                    ){
+
+                        return true;
+
+                    }
+
+                    return (
+                        boxIOU(
+                            current,
+                            item
+                        ) <
+                        CONFIG.IOU
+                    );
+
+                }
+            );
+
+    }
+
+    return result;
+
+}
+
+
+/* =========================
+   YOLO OUTPUT PARSER
+========================= */
+
+function parseYOLO(
+    output,
+    prep
+){
+
+    const data =
+        output.data;
+
+    const dims =
+        output.dims;
+
+    /*
+     * YOLOv8 ONNX usually:
+     *
+     * [1,84,8400]
+     *
+     * 4 box values
+     * + 80 classes
+     */
+
+    let channels;
+    let count;
+    let transposed =
+        false;
+
+    if(
+        dims.length === 3
+    ){
+
+        if(
+            dims[1] <
+            dims[2]
+        ){
+
+            channels =
+                dims[1];
+
+            count =
+                dims[2];
+
+            transposed =
+                false;
+
+        }else{
+
+            count =
+                dims[1];
+
+            channels =
+                dims[2];
+
+            transposed =
+                true;
+
+        }
+
+    }else{
+
+        throw new Error(
+            "Unsupported YOLO output shape"
+        );
+
+    }
+
+    const detections = [];
+
+    for(
+        let i=0;
+        i<count;
+        i++
+    ){
+
+        let cx;
+        let cy;
+        let w;
+        let h;
+
+        if(
+            !transposed
+        ){
+
+            cx =
+                data[
+                    i
+                ];
+
+            cy =
+                data[
+                    count + i
+                ];
+
+            w =
+                data[
+                    count*2 + i
+                ];
+
+            h =
+                data[
+                    count*3 + i
+                ];
+
+        }else{
+
+            const base =
+                i * channels;
+
+            cx =
+                data[
+                    base
+                ];
+
+            cy =
+                data[
+                    base+1
+                ];
+
+            w =
+                data[
+                    base+2
+                ];
+
+            h =
+                data[
+                    base+3
+                ];
+
+        }
+
+        let bestClass =
+            -1;
+
+        let bestScore =
+            0;
+
+        for(
+            let c=4;
+            c<channels;
+            c++
+        ){
+
+            const score =
+                transposed
+                ?
+                data[
+                    i*channels+c
+                ]
+                :
+                data[
+                    c*count+i
+                ];
+
+            if(
+                score >
+                bestScore
+            ){
+
+                bestScore =
+                    score;
+
+                bestClass =
+                    c-4;
+
+            }
+
+        }
+
+        if(
+            bestScore <
+            CONFIG.CONFIDENCE
+        ){
+
+            continue;
+
+        }
+
+        let x1 =
+            cx -
+            w/2;
+
+        let y1 =
+            cy -
+            h/2;
+
+        let x2 =
+            cx +
+            w/2;
+
+        let y2 =
+            cy +
+            h/2;
+
+        /*
+         * Remove letterbox.
+         */
+
+        x1 =
+            (
+                x1 -
+                prep.offsetX
+            ) /
+            prep.scale;
+
+        y1 =
+            (
+                y1 -
+                prep.offsetY
+            ) /
+            prep.scale;
+
+        x2 =
+            (
+                x2 -
+                prep.offsetX
+            ) /
+            prep.scale;
+
+        y2 =
+            (
+                y2 -
+                prep.offsetY
+            ) /
+            prep.scale;
+
+        x1 =
+            Math.max(
+                0,
+                Math.min(
+                    prep.sourceWidth,
+                    x1
+                )
+            );
+
+        y1 =
+            Math.max(
+                0,
+                Math.min(
+                    prep.sourceHeight,
+                    y1
+                )
+            );
+
+        x2 =
+            Math.max(
+                0,
+                Math.min(
+                    prep.sourceWidth,
+                    x2
+                )
+            );
+
+        y2 =
+            Math.max(
+                0,
+                Math.min(
+                    prep.sourceHeight,
+                    y2
+                )
+            );
+
+        if(
+            x2 <= x1 ||
+            y2 <= y1
+        ){
+
+            continue;
+
+        }
+
+        detections.push({
+
+            classId:
+                bestClass,
+
+            name:
+                CLASSES[
+                    bestClass
+                ] ||
+                "object",
+
+            score:
+                bestScore,
+
+            x1,
+            y1,
+            x2,
+            y2
+
+        });
+
+    }
+
+    return nms(
+        detections
     );
 
 }
 
 
-/* =========================================================
-   TRACKING
-========================================================= */
-
-function resetTracks(){
-
-    tracks =
-        [];
-
-    nextTrackId =
-        1;
-
-    trackedCount.textContent =
-        "0";
-
-}
-
-
-function updateTracking(
-    detections
-){
-
-    const usedTracks =
-        new Set();
-
-
-    const usedDetections =
-        new Set();
-
-
-    /*
-    จับคู่ detection กับ track เดิม
-    โดยดูทั้ง class และระยะห่าง
-    */
-
-    for(
-        let i=0;
-        i<detections.length;
-        i++
-    ){
-
-        const d =
-            detections[i];
-
-
-        const center =
-            centerOf(
-                d
-            );
-
-
-        let best =
-            null;
-
-        let bestDistance =
-            Infinity;
-
-
-        for(
-            const track of tracks
-        ){
-
-            if(
-                usedTracks.has(
-                    track.id
-                )
-            ){
-
-                continue;
-
-            }
-
-
-            if(
-                track.name !==
-                d.name
-            ){
-
-                continue;
-
-            }
-
-
-            const dist =
-                distance(
-                    center,
-                    track
-                );
-
-
-            if(
-                dist <
-                bestDistance
-            ){
-
-                best =
-                    track;
-
-                bestDistance =
-                    dist;
-
-            }
-
-        }
-
-
-        if(
-            best &&
-            bestDistance <=
-            MAX_TRACK_DISTANCE
-        ){
-
-            best.x =
-                center.x;
-
-            best.y =
-                center.y;
-
-            best.x1 =
-                d.x1;
-
-            best.y1 =
-                d.y1;
-
-            best.x2 =
-                d.x2;
-
-            best.y2 =
-                d.y2;
-
-            best.confidence =
-                d.confidence;
-
-            best.missed =
-                0;
-
-            best.age++;
-
-            d.trackId =
-                best.id;
-
-            usedTracks.add(
-                best.id
-            );
-
-            usedDetections.add(
-                i
-            );
-
-        }
-
-    }
-
-
-    /*
-    สร้าง Track ใหม่
-    */
-
-    for(
-        let i=0;
-        i<detections.length;
-        i++
-    ){
-
-        if(
-            usedDetections.has(
-                i
-            )
-        ){
-
-            continue;
-
-        }
-
-
-        const d =
-            detections[i];
-
-
-        const center =
-            centerOf(
-                d
-            );
-
-
-        const track = {
-
-            id:
-                nextTrackId++,
-
-            name:
-                d.name,
-
-            x:
-                center.x,
-
-            y:
-                center.y,
-
-            x1:
-                d.x1,
-
-            y1:
-                d.y1,
-
-            x2:
-                d.x2,
-
-            y2:
-                d.y2,
-
-            confidence:
-                d.confidence,
-
-            age:
-                1,
-
-            missed:
-                0,
-
-            announced:
-                false
-
-        };
-
-
-        d.trackId =
-            track.id;
-
-
-        tracks.push(
-            track
-        );
-
-    }
-
-
-    /*
-    เพิ่ม missed ให้ track
-    ที่ไม่เจอในเฟรมนี้
-    */
-
-    for(
-        const track of tracks
-    ){
-
-        if(
-            !usedTracks.has(
-                track.id
-            ) &&
-            !detections.some(
-                d =>
-                    d.trackId ===
-                    track.id
-            )
-        ){
-
-            track.missed++;
-
-        }
-
-    }
-
-
-    tracks =
-        tracks.filter(
-            track =>
-                track.missed <=
-                MAX_MISSED_FRAMES
-        );
-
-
-    trackedCount.textContent =
-        tracks.length;
-
-
-    trackingState.textContent =
-        tracks.length > 0
-        ? "ACTIVE"
-        : "READY";
-
-
-    trackingState.className =
-        tracks.length > 0
-        ? "system-value good"
-        : "system-value";
-
-}
-
-
-/* =========================================================
-   THAI VOICE
-========================================================= */
-
-let voices =
-    [];
-
-function loadVoices(){
-
-    if(
-        "speechSynthesis" in window
-    ){
-
-        voices =
-            speechSynthesis
-                .getVoices();
-
-    }
-
-}
-
-
-if(
-    "speechSynthesis" in window
-){
-
-    speechSynthesis
-        .addEventListener(
-            "voiceschanged",
-            loadVoices
-        );
-
-    loadVoices();
-
-}
-
-
-function getThaiVoice(){
-
-    const thai =
-        voices.find(
-            voice =>
-                voice.lang &&
-                voice.lang
-                    .toLowerCase()
-                    .startsWith(
-                        "th"
-                    )
-        );
-
-
-    return thai || null;
-
-}
-
-
-let lastSpeechTime =
-    0;
-
-const SPEECH_COOLDOWN =
-    1800;
-
-
-function speakThai(
-    text
-){
-
-    if(
-        !("speechSynthesis" in window)
-    ){
-
-        voiceState.textContent =
-            "UNAVAILABLE";
-
-        return;
-
-    }
-
-
-    const now =
-        Date.now();
-
-
-    if(
-        now -
-        lastSpeechTime <
-        SPEECH_COOLDOWN
-    ){
-
-        return;
-
-    }
-
-
-    lastSpeechTime =
-        now;
-
-
-    try{
-
-        speechSynthesis.cancel();
-
-
-        const utterance =
-            new SpeechSynthesisUtterance(
-                text
-            );
-
-
-        utterance.lang =
-            "th-TH";
-
-
-        utterance.rate =
-            0.95;
-
-
-        utterance.pitch =
-            1;
-
-
-        const voice =
-            getThaiVoice();
-
-
-        if(
-            voice
-        ){
-
-            utterance.voice =
-                voice;
-
-        }
-
-
-        voiceState.textContent =
-            "SPEAKING";
-
-
-        utterance.onend =
-            () => {
-
-                voiceState.textContent =
-                    "THAI";
-
-            };
-
-
-        utterance.onerror =
-            () => {
-
-                voiceState.textContent =
-                    "THAI";
-
-            };
-
-
-        speechSynthesis.speak(
-            utterance
-        );
-
-
-    }catch(error){
-
-        console.error(
-            error
-        );
-
-        voiceState.textContent =
-            "THAI";
-
-    }
-
-}
-
-
-/* =========================================================
-   ANNOUNCE NEW OBJECT
-========================================================= */
-
-function announceNewObjects(
-    detections
-){
-
-    /*
-    ให้ประกาศเฉพาะ Track ใหม่
-    */
-
-    for(
-        const d of detections
-    ){
-
-        const track =
-            tracks.find(
-                t =>
-                    t.id ===
-                    d.trackId
-            );
-
-
-        if(
-            !track
-        ){
-
-            continue;
-
-        }
-
-
-        if(
-            track.announced
-        ){
-
-            continue;
-
-        }
-
-
-        track.announced =
-            true;
-
-
-        const thai =
-            thaiName(
-                d.name
-            );
-
-
-        log(
-            "ตรวจพบ " +
-            thai +
-            " #" +
-            track.id,
-            "ok"
-        );
-
-
-        speakThai(
-            "ตรวจพบ " +
-            thai
-        );
-
-
-        /*
-        ประกาศทีละวัตถุ
-        */
-
-        break;
-
-    }
-
-}
-
-
-/* =========================================================
-   DETECTION
-========================================================= */
+/* =========================
+   INFERENCE
+========================= */
 
 async function detect(){
 
     if(
         !session ||
         !running ||
-        busy
+        paused ||
+        processing ||
+        video.readyState <
+        2
     ){
 
         return;
 
     }
 
-
-    busy =
+    processing =
         true;
-
 
     const start =
         performance.now();
 
-
     try{
 
         const prep =
-            preprocess();
+            prepareInput();
 
+        if(
+            !prep
+        ){
+
+            return;
+
+        }
 
         const inputName =
             session.inputNames[0];
 
+        const feeds = {};
 
-        const feeds =
-            {};
-
-
-        feeds[inputName] =
+        feeds[
+            inputName
+        ] =
             prep.tensor;
 
-
-        const outputs =
+        const results =
             await session.run(
                 feeds
             );
 
-
-        const output =
-            outputs[
-                session.outputNames[0]
-            ];
-
-
-        const data =
-            output.data;
-
-
-        const count =
-            output.dims[1] ||
-            300;
-
+        const outputName =
+            session.outputNames[0];
 
         const detections =
-            [];
+            parseYOLO(
+                results[
+                    outputName
+                ],
+                prep
+            );
 
+        lastDetections =
+            detections;
 
-        for(
-            let i=0;
-            i<count;
-            i++
-        ){
-
-            const o =
-                i * 6;
-
-
-            const x1 =
-                data[o];
-
-
-            const y1 =
-                data[o+1];
-
-
-            const x2 =
-                data[o+2];
-
-
-            const y2 =
-                data[o+3];
-
-
-            const confidence =
-                data[o+4];
-
-
-            const classId =
-                Math.round(
-                    data[o+5]
-                );
-
-
-            if(
-                confidence <
-                CONFIDENCE
-            ){
-
-                continue;
-
-            }
-
-
-            const name =
-                CLASS_NAMES[
-                    classId
-                ] ||
-                "object";
-
-
-            const bx1 =
-                Math.max(
-                    0,
-
-                    (
-                        x1 -
-                        prep.padX
-                    ) /
-                    prep.scale
-                );
-
-
-            const by1 =
-                Math.max(
-                    0,
-
-                    (
-                        y1 -
-                        prep.padY
-                    ) /
-                    prep.scale
-                );
-
-
-            const bx2 =
-                Math.min(
-                    prep.sourceWidth,
-
-                    (
-                        x2 -
-                        prep.padX
-                    ) /
-                    prep.scale
-                );
-
-
-            const by2 =
-                Math.min(
-                    prep.sourceHeight,
-
-                    (
-                        y2 -
-                        prep.padY
-                    ) /
-                    prep.scale
-                );
-
-
-            if(
-                bx2 <= bx1 ||
-                by2 <= by1
-            ){
-
-                continue;
-
-            }
-
-
-            detections.push({
-
-                x1:bx1,
-
-                y1:by1,
-
-                x2:bx2,
-
-                y2:by2,
-
-                confidence,
-
-                classId,
-
-                name,
-
-                trackId:null
-
-            });
-
-        }
-
-
-        /*
-        Tracking
-        */
-
-        updateTracking(
-            detections
-        );
-
-
-        /*
-        เสียงภาษาไทย
-        */
-
-        announceNewObjects(
-            detections
-        );
-
-
-        const elapsed =
+        lastInferenceTime =
             performance.now() -
             start;
 
-
-        inferenceTime.textContent =
-            Math.round(
-                elapsed
-            );
-
-
-        inferenceHistory.push(
-            elapsed
-        );
-
-
-        if(
-            inferenceHistory.length >
-            MAX_GRAPH_POINTS
-        ){
-
-            inferenceHistory.shift();
-
-        }
-
+        inferenceCounter++;
 
         drawDetections(
             detections
         );
 
-
         updateObjects(
             detections
         );
 
-
-        frameCounter++;
-
-
-        const now =
-            performance.now();
-
-
-        if(
-            now -
-            fpsTimer >=
-            1000
-        ){
-
-            const currentFPS =
-                frameCounter;
-
-
-            fpsElement.textContent =
-                currentFPS;
-
-
-            fpsHistory.push(
-                currentFPS
+        document.getElementById(
+            "inference"
+        ).textContent =
+            Math.round(
+                lastInferenceTime
             );
 
+        document.getElementById(
+            "objectCount"
+        ).textContent =
+            detections.length;
 
-            if(
-                fpsHistory.length >
-                MAX_GRAPH_POINTS
-            ){
+        document.getElementById(
+            "objectState"
+        ).textContent =
+            detections.length
+            ?
+            "TRACKING"
+            :
+            "CLEAR";
 
-                fpsHistory.shift();
+        if(
+            detections.length
+        ){
 
-            }
+            document.getElementById(
+                "objectState"
+            ).className =
+                "panel-state good";
 
+        }else{
 
-            frameCounter =
-                0;
-
-
-            fpsTimer =
-                now;
-
-
-            drawGraph();
+            document.getElementById(
+                "objectState"
+            ).className =
+                "panel-state";
 
         }
-
 
     }catch(error){
 
         console.error(
+            "Detection error:",
             error
         );
 
+        document.getElementById(
+            "sysStatus"
+        ).textContent =
+            "Detection error";
 
-        log(
-            "Inference error: " +
-            (
-                error.message ||
-                error
-            ),
-            "error"
-        );
+        document.getElementById(
+            "sysStatus"
+        ).className =
+            "system-value bad";
+
+    }finally{
+
+        processing =
+            false;
 
     }
-
-
-    busy =
-        false;
 
 }
 
 
-/* =========================================================
-   LOOP
-========================================================= */
+/* =========================
+   DETECTION LOOP
+========================= */
 
-async function detectLoop(){
+function detectionLoop(
+    now
+){
 
     if(
         !running
@@ -4024,29 +2676,50 @@ async function detectLoop(){
 
     }
 
-
-    await detect();
-
+    const interval =
+        1000 /
+        aiTargetFps;
 
     if(
-        running
+        !paused &&
+        !processing &&
+        now -
+        lastFrameTime >=
+        interval
     ){
 
-        animationId =
-            requestAnimationFrame(
-                detectLoop
-            );
+        lastFrameTime =
+            now;
+
+        detect();
 
     }
+
+    requestAnimationFrame(
+        detectionLoop
+    );
 
 }
 
 
-/* =========================================================
-   CANVAS
-========================================================= */
+/* =========================
+   DRAW DETECTIONS
+========================= */
 
-function clearCanvas(){
+function drawDetections(
+    detections
+){
+
+    if(
+        canvas.width !==
+        video.videoWidth ||
+        canvas.height !==
+        video.videoHeight
+    ){
+
+        resizeCanvas();
+
+    }
 
     ctx.clearRect(
         0,
@@ -4055,516 +2728,540 @@ function clearCanvas(){
         canvas.height
     );
 
-}
-
-
-/* =========================================================
-   DRAW DETECTIONS
-========================================================= */
-
-function drawDetections(
-    detections
-){
-
-    clearCanvas();
-
-
-    if(
-        !video.videoWidth
-    ){
-
-        return;
-
-    }
-
-
-    const sx =
+    const scaleX =
         canvas.width /
         video.videoWidth;
 
-
-    const sy =
+    const scaleY =
         canvas.height /
         video.videoHeight;
 
-
     ctx.lineWidth =
-        2;
-
+        Math.max(
+            2,
+            canvas.width /
+            500
+        );
 
     ctx.font =
-        "bold 12px Arial";
+        "bold " +
+        Math.max(
+            11,
+            canvas.width /
+            70
+        ) +
+        "px Arial";
 
+    detections.forEach(
+        (d,index) => {
 
-    for(
-        const d of detections
-    ){
+            const x =
+                d.x1 *
+                scaleX;
 
-        let x =
-            d.x1 *
-            sx;
+            const y =
+                d.y1 *
+                scaleY;
 
-
-        let y =
-            d.y1 *
-            sy;
-
-
-        let w =
-            (
-                d.x2 -
-                d.x1
-            ) *
-            sx;
-
-
-        let h =
-            (
-                d.y2 -
-                d.y1
-            ) *
-            sy;
-
-
-        /*
-        Flip เฉพาะตำแหน่ง
-        ไม่ flip canvas
-        */
-
-        if(
-            flipped
-        ){
-
-            x =
-                canvas.width -
+            const w =
                 (
-                    x +
-                    w
-                );
+                    d.x2 -
+                    d.x1
+                ) *
+                scaleX;
+
+            const h =
+                (
+                    d.y2 -
+                    d.y1
+                ) *
+                scaleY;
+
+            ctx.strokeStyle =
+                "#55cfff";
+
+            ctx.shadowColor =
+                "rgba(80,210,255,.65)";
+
+            ctx.shadowBlur =
+                8;
+
+            ctx.strokeRect(
+                x,
+                y,
+                w,
+                h
+            );
+
+            ctx.shadowBlur =
+                0;
+
+            const label =
+                d.name +
+                " " +
+                Math.round(
+                    d.score *
+                    100
+                ) +
+                "%";
+
+            const textWidth =
+                ctx.measureText(
+                    label
+                ).width;
+
+            const labelHeight =
+                22;
+
+            ctx.fillStyle =
+                "rgba(1,12,20,.86)";
+
+            ctx.fillRect(
+                x,
+                Math.max(
+                    0,
+                    y -
+                    labelHeight
+                ),
+                textWidth +
+                12,
+                labelHeight
+            );
+
+            ctx.fillStyle =
+                "#dff8ff";
+
+            ctx.fillText(
+                label,
+                x+6,
+                Math.max(
+                    15,
+                    y-7
+                )
+            );
 
         }
-
-
-        const thai =
-            thaiName(
-                d.name
-            );
-
-
-        const trackText =
-            d.trackId
-            ? " #" +
-              String(
-                  d.trackId
-              )
-            : "";
-
-
-        const label =
-            thai +
-            trackText +
-            " " +
-            Math.round(
-                d.confidence *
-                100
-            ) +
-            "%";
-
-
-        const tw =
-            ctx.measureText(
-                label
-            ).width;
-
-
-        /*
-        กรอบ
-        */
-
-        ctx.strokeStyle =
-            "#50c7ff";
-
-
-        ctx.strokeRect(
-            x,
-            y,
-            w,
-            h
-        );
-
-
-        /*
-        มุมกรอบ
-        */
-
-        const s =
-            Math.min(
-                12,
-                w/3,
-                h/3
-            );
-
-
-        ctx.lineWidth =
-            3;
-
-
-        ctx.beginPath();
-
-
-        ctx.moveTo(
-            x,
-            y+s
-        );
-
-        ctx.lineTo(
-            x,
-            y
-        );
-
-        ctx.lineTo(
-            x+s,
-            y
-        );
-
-
-        ctx.moveTo(
-            x+w-s,
-            y
-        );
-
-        ctx.lineTo(
-            x+w,
-            y
-        );
-
-        ctx.lineTo(
-            x+w,
-            y+s
-        );
-
-
-        ctx.moveTo(
-            x,
-            y+h-s
-        );
-
-        ctx.lineTo(
-            x,
-            y+h
-        );
-
-        ctx.lineTo(
-            x+s,
-            y+h
-        );
-
-
-        ctx.moveTo(
-            x+w-s,
-            y+h
-        );
-
-        ctx.lineTo(
-            x+w,
-            y+h
-        );
-
-        ctx.lineTo(
-            x+w,
-            y+h-s
-        );
-
-
-        ctx.stroke();
-
-
-        /*
-        ป้ายภาษาไทย
-        */
-
-        const labelX =
-            x;
-
-
-        const labelY =
-            Math.max(
-                0,
-                y - 23
-            );
-
-
-        ctx.fillStyle =
-            "rgba(0,10,18,.94)";
-
-
-        ctx.fillRect(
-            labelX,
-            labelY,
-            tw + 14,
-            23
-        );
-
-
-        ctx.fillStyle =
-            "#dff7ff";
-
-
-        ctx.fillText(
-            label,
-            labelX + 7,
-            Math.max(
-                15,
-                y - 7
-            )
-        );
-
-    }
+    );
 
 }
 
 
-/* =========================================================
+/* =========================
    OBJECT LIST
-========================================================= */
+========================= */
 
 function updateObjects(
     detections
 ){
 
-    objectCount.textContent =
-        detections.length;
-
-
     if(
-        detections.length === 0
+        !detections.length
     ){
 
-        objectList.innerHTML =
-            '<div class="empty">ยังไม่พบวัตถุ</div>';
+        objectsEl.innerHTML =
+            '<div class="empty">' +
+            'No objects detected' +
+            '</div>';
 
         return;
 
     }
 
+    const fragment =
+        document.createDocumentFragment();
 
-    total +=
-        detections.length;
+    detections.forEach(
+        (
+            d,
+            index
+        ) => {
 
+            const row =
+                document.createElement(
+                    "div"
+                );
 
-    totalDetections.textContent =
-        total;
+            row.className =
+                "object";
 
+            const left =
+                document.createElement(
+                    "div"
+                );
 
-    lastObject.textContent =
-        thaiName(
-            detections[0].name
-        );
+            left.className =
+                "object-left";
 
+            const id =
+                document.createElement(
+                    "span"
+                );
 
-    const grouped =
-        new Map();
+            id.className =
+                "object-index";
 
+            id.textContent =
+                "#" +
+                String(
+                    index+1
+                ).padStart(
+                    2,
+                    "0"
+                );
 
-    for(
-        const d of detections
-    ){
+            const name =
+                document.createElement(
+                    "span"
+                );
 
-        if(
-            !grouped.has(
-                d.trackId
-            )
-        ){
+            name.className =
+                "object-name";
 
-            grouped.set(
-                d.trackId,
-                d
+            name.textContent =
+                d.name;
+
+            const score =
+                document.createElement(
+                    "span"
+                );
+
+            score.className =
+                "object-score";
+
+            score.textContent =
+                Math.round(
+                    d.score *
+                    100
+                ) +
+                "%";
+
+            left.appendChild(
+                id
+            );
+
+            left.appendChild(
+                name
+            );
+
+            row.appendChild(
+                left
+            );
+
+            row.appendChild(
+                score
+            );
+
+            fragment.appendChild(
+                row
             );
 
         }
+    );
 
-    }
+    objectsEl.replaceChildren(
+        fragment
+    );
+
+}
 
 
-    objectList.innerHTML =
-        "";
+/* =========================
+   CLEAR OVERLAY
+========================= */
+
+function clearOverlay(){
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    lastDetections =
+        [];
+
+    updateObjects(
+        []
+    );
+
+    document.getElementById(
+        "objectCount"
+    ).textContent =
+        "0";
+
+}
 
 
-    for(
-        const [
-            id,
-            d
-        ]
-        of grouped
+/* =========================
+   MIRROR
+========================= */
+
+function updateMirror(){
+
+    camera.classList.toggle(
+        "mirror",
+        mirror
+    );
+
+    document.getElementById(
+        "flipBtn"
+    ).classList.toggle(
+        "active",
+        mirror
+    );
+
+}
+
+
+/* =========================
+   FPS
+========================= */
+
+function updateFPS(){
+
+    const now =
+        performance.now();
+
+    frameCounter++;
+
+    if(
+        now -
+        fpsTimer >=
+        1000
     ){
 
-        const row =
-            document.createElement(
-                "div"
-            );
+        fps =
+            frameCounter;
 
+        frameCounter =
+            0;
 
-        row.className =
-            "object";
+        fpsTimer =
+            now;
 
-
-        const left =
-            document.createElement(
-                "div"
-            );
-
-
-        left.className =
-            "object-left";
-
-
-        const track =
-            document.createElement(
-                "span"
-            );
-
-
-        track.className =
-            "object-id";
-
-
-        track.textContent =
-            "#" +
-            id;
-
-
-        const name =
-            document.createElement(
-                "span"
-            );
-
-
-        name.className =
-            "object-name";
-
-
-        name.textContent =
-            thaiName(
-                d.name
-            );
-
-
-        const score =
-            document.createElement(
-                "span"
-            );
-
-
-        score.className =
-            "object-score";
-
-
-        score.textContent =
-            Math.round(
-                d.confidence *
-                100
-            ) +
-            "%";
-
-
-        left.appendChild(
-            track
-        );
-
-
-        left.appendChild(
-            name
-        );
-
-
-        row.appendChild(
-            left
-        );
-
-
-        row.appendChild(
-            score
-        );
-
-
-        objectList.appendChild(
-            row
-        );
+        document.getElementById(
+            "fps"
+        ).textContent =
+            fps;
 
     }
 
 }
 
 
-/* =========================================================
-   GRAPH
-========================================================= */
+/* =========================
+   AI FPS
+========================= */
 
-function resizeGraph(){
+function updateAIFPS(){
 
-    const rect =
-        graph.getBoundingClientRect();
+    const now =
+        performance.now();
+
+    if(
+        now -
+        aiFpsTimer >=
+        1000
+    ){
+
+        aiFps =
+            inferenceCounter;
+
+        inferenceCounter =
+            0;
+
+        aiFpsTimer =
+            now;
+
+        document.getElementById(
+            "aiFps"
+        ).textContent =
+            aiFps;
+
+        adaptivePerformance();
+
+    }
+
+}
 
 
-    const ratio =
-        window.devicePixelRatio ||
-        1;
+/* =========================
+   ADAPTIVE PERFORMANCE
+========================= */
+
+function adaptivePerformance(){
+
+    if(
+        !CONFIG.ADAPTIVE
+    ){
+
+        return;
+
+    }
+
+    const latency =
+        lastInferenceTime;
+
+    adaptiveTimer++;
+
+    /*
+     * If inference becomes slow,
+     * lower AI FPS first.
+     */
+
+    if(
+        latency > 130
+    ){
+
+        aiTargetFps =
+            Math.max(
+                CONFIG.MIN_AI_FPS,
+                aiTargetFps - 1
+            );
+
+    }else if(
+        latency < 60 &&
+        aiTargetFps <
+        CONFIG.MAX_AI_FPS
+    ){
+
+        aiTargetFps =
+            Math.min(
+                CONFIG.MAX_AI_FPS,
+                aiTargetFps + 1
+            );
+
+    }
+
+    /*
+     * If extremely slow,
+     * lower model input resolution.
+     */
+
+    if(
+        latency > 220 &&
+        inputSize >
+        CONFIG.MIN_INPUT
+    ){
+
+        inputSize =
+            Math.max(
+                CONFIG.MIN_INPUT,
+                inputSize - 64
+            );
+
+    }
+
+    /*
+     * If device becomes fast again,
+     * increase resolution carefully.
+     */
+
+    if(
+        latency < 70 &&
+        inputSize <
+        CONFIG.MAX_INPUT &&
+        adaptiveTimer % 4 === 0
+    ){
+
+        inputSize =
+            Math.min(
+                CONFIG.MAX_INPUT,
+                inputSize + 32
+            );
+
+    }
+
+    document.getElementById(
+        "inputSize"
+    ).textContent =
+        inputSize;
+
+    document.getElementById(
+        "performanceState"
+    ).textContent =
+        aiTargetFps +
+        " AI FPS";
+
+}
 
 
-    graph.width =
-        Math.max(
-            1,
-            Math.round(
-                rect.width *
-                ratio
-            )
+/* =========================
+   PERFORMANCE GRAPH
+========================= */
+
+function graphLoop(){
+
+    const value =
+        Math.min(
+            100,
+            lastInferenceTime
         );
 
-
-    graph.height =
-        Math.max(
-            1,
-            Math.round(
-                rect.height *
-                ratio
-            )
-        );
-
-
-    graphCtx.setTransform(
-        ratio,
-        0,
-        0,
-        ratio,
-        0,
-        0
+    performanceHistory.push(
+        value
     );
 
+    if(
+        performanceHistory.length >
+        80
+    ){
+
+        performanceHistory.shift();
+
+    }
 
     drawGraph();
+
+    requestAnimationFrame(
+        graphLoop
+    );
 
 }
 
 
 function drawGraph(){
 
-    const width =
-        graph.clientWidth;
+    const rect =
+        graphCanvas.getBoundingClientRect();
 
+    const dpr =
+        window.devicePixelRatio ||
+        1;
+
+    const width =
+        Math.max(
+            1,
+            Math.floor(
+                rect.width *
+                dpr
+            )
+        );
 
     const height =
-        graph.clientHeight;
-
+        Math.max(
+            1,
+            Math.floor(
+                rect.height *
+                dpr
+            )
+        );
 
     if(
-        !width ||
-        !height
+        graphCanvas.width !==
+        width ||
+        graphCanvas.height !==
+        height
     ){
 
-        return;
+        graphCanvas.width =
+            width;
+
+        graphCanvas.height =
+            height;
 
     }
-
 
     graphCtx.clearRect(
         0,
@@ -4573,51 +3270,41 @@ function drawGraph(){
         height
     );
 
+    graphCtx.lineWidth =
+        1;
 
-    /*
-    FPS
-    */
+    graphCtx.strokeStyle =
+        "rgba(80,190,255,.12)";
 
-    drawGraphLine(
-        fpsHistory,
-        width,
-        height,
-        60,
-        true
-    );
+    for(
+        let i=1;
+        i<5;
+        i++
+    ){
 
+        const y =
+            height *
+            i /
+            5;
 
-    /*
-    Inference
-    */
+        graphCtx.beginPath();
 
-    drawGraphLine(
-        inferenceHistory,
-        width,
-        height,
-        300,
-        false
-    );
+        graphCtx.moveTo(
+            0,
+            y
+        );
 
+        graphCtx.lineTo(
+            width,
+            y
+        );
 
-    graphState.textContent =
-        fpsHistory.length
-        ? "LIVE"
-        : "WAITING";
+        graphCtx.stroke();
 
-}
-
-
-function drawGraphLine(
-    values,
-    width,
-    height,
-    maxValue,
-    fpsMode
-){
+    }
 
     if(
-        values.length <
+        performanceHistory.length <
         2
     ){
 
@@ -4625,184 +3312,276 @@ function drawGraphLine(
 
     }
 
-
     graphCtx.beginPath();
 
+    performanceHistory.forEach(
+        (
+            value,
+            index
+        ) => {
 
-    for(
-        let i=0;
-        i<values.length;
-        i++
-    ){
-
-        const x =
-            (
-                i /
+            const x =
+                index /
                 (
-                    MAX_GRAPH_POINTS -
-                    1
-                )
-            ) *
-            width;
+                    performanceHistory.length-1
+                ) *
+                width;
 
-
-        const value =
-            Math.min(
-                maxValue,
-                values[i]
-            );
-
-
-        const y =
-            height -
-            (
-                value /
-                maxValue
-            ) *
-            (
+            const y =
                 height -
-                20
-            ) -
-            10;
+                (
+                    value /
+                    250
+                ) *
+                height;
 
+            if(
+                index === 0
+            ){
 
-        if(
-            i === 0
-        ){
+                graphCtx.moveTo(
+                    x,
+                    y
+                );
 
-            graphCtx.moveTo(
-                x,
-                y
-            );
+            }else{
 
-        }else{
+                graphCtx.lineTo(
+                    x,
+                    y
+                );
 
-            graphCtx.lineTo(
-                x,
-                y
-            );
+            }
 
         }
-
-    }
-
+    );
 
     graphCtx.strokeStyle =
-        fpsMode
-        ? "#55d8ff"
-        : "#48e7a0";
-
+        "#54cfff";
 
     graphCtx.lineWidth =
         2;
-
 
     graphCtx.stroke();
 
 }
 
 
-window.addEventListener(
-    "resize",
-    resizeGraph
-);
+/* =========================
+   MAIN FPS LOOP
+========================= */
+
+function mainLoop(){
+
+    if(
+        running &&
+        !paused
+    ){
+
+        updateFPS();
+
+        updateAIFPS();
+
+    }
+
+    requestAnimationFrame(
+        mainLoop
+    );
+
+}
 
 
-/* =========================================================
-   EVENTS
-========================================================= */
+/* =========================
+   CONFIDENCE
+========================= */
 
-startButton.addEventListener(
+document.getElementById(
+    "confidence"
+).textContent =
+    Math.round(
+        CONFIG.CONFIDENCE *
+        100
+    );
+
+
+/* =========================
+   BUTTONS
+========================= */
+
+document.getElementById(
+    "startBtn"
+).addEventListener(
     "click",
     startCamera
 );
 
 
-flipButton.addEventListener(
+document.getElementById(
+    "stopBtn"
+).addEventListener(
     "click",
-    toggleFlip
-);
-
-
-switchButton.addEventListener(
-    "click",
-    switchCamera
-);
-
-
-stopButton.addEventListener(
-    "click",
-    () =>
-        stopCamera()
-);
-
-
-window.addEventListener(
-    "resize",
     () => {
 
-        if(
-            video.videoWidth
-        ){
+        stopCamera();
 
-            canvas.width =
-                video.videoWidth;
+        loader.classList.remove(
+            "hidden"
+        );
 
+        loaderMessage(
+            "Camera stopped."
+        );
 
-            canvas.height =
-                video.videoHeight;
+        setStatus(
+            "READY"
+        );
 
-        }
+        document.getElementById(
+            "sysStatus"
+        ).textContent =
+            "Ready";
 
-
-        resizeGraph();
+        document.getElementById(
+            "sysStatus"
+        ).className =
+            "system-value";
 
     }
 );
 
 
-window.addEventListener(
-    "beforeunload",
-    () =>
-        stopCamera(false)
+document.getElementById(
+    "pauseBtn"
+).addEventListener(
+    "click",
+    () => {
+
+        paused =
+            !paused;
+
+        const button =
+            document.getElementById(
+                "pauseBtn"
+            );
+
+        button.textContent =
+            paused
+            ?
+            "RESUME AI"
+            :
+            "PAUSE AI";
+
+        button.classList.toggle(
+            "active",
+            paused
+        );
+
+        if(
+            paused
+        ){
+
+            setStatus(
+                "AI PAUSED"
+            );
+
+        }else{
+
+            setStatus(
+                "AI ONLINE",
+                "ready"
+            );
+
+        }
+
+    }
 );
 
 
-/* =========================================================
-   START
-========================================================= */
+document.getElementById(
+    "flipBtn"
+).addEventListener(
+    "click",
+    async () => {
 
-if(
-    !navigator.mediaDevices ||
-    !navigator.mediaDevices.getUserMedia
-){
+        mirror =
+            !mirror;
 
-    setStatus(
-        "UNSUPPORTED",
-        "error"
-    );
+        updateMirror();
 
-
-    log(
-        "Camera API ไม่พร้อมใช้งาน",
-        "error"
-    );
+    }
+);
 
 
-}else{
+/* =========================
+   VISIBILITY
+========================= */
 
-    log(
-        "JARVIS MONITOR ONLINE",
-        "ok"
-    );
+document.addEventListener(
+    "visibilitychange",
+    () => {
+
+        /*
+         * Do not run expensive AI
+         * while the page is hidden.
+         */
+
+        if(
+            document.hidden
+        ){
+
+            paused =
+                true;
+
+        }else if(
+            running
+        ){
+
+            paused =
+                false;
+
+        }
+
+    }
+);
 
 
-    resizeGraph();
+/* =========================
+   RESIZE
+========================= */
+
+window.addEventListener(
+    "resize",
+    () => {
+
+        resizeCanvas();
+
+    }
+);
 
 
-    loadAI();
+/* =========================
+   PAGE LOAD
+========================= */
 
-}
+document.getElementById(
+    "sysDevice"
+).textContent =
+    navigator.userAgent.includes(
+        "Android"
+    )
+    ?
+    "Android"
+    :
+    navigator.platform;
+
+
+updateMirror();
+
+graphLoop();
+
+mainLoop();
+
+loadModel();
 
 </script>
 
