@@ -1,30 +1,3589 @@
-<!doctype html><html lang="th"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>FLUKE // JARVIS</title><style>*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#020711;color:#eaf6ff;font:12px Arial}body{display:flex;flex-direction:column}header{height:54px;flex:none;padding:0 12px;display:flex;align-items:center;justify-content:space-between;background:#030c19;border-bottom:1px solid #17405e}.logo{font-weight:900;letter-spacing:2px}.logo small{display:block;color:#67d8ff;font:8px monospace}.status{font:9px monospace}.ok{color:#71ffad}.err{color:#ff6578}main{position:relative;flex:1;min-height:0;background:#000;overflow:hidden}video,canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}video.mirror{transform:scaleX(-1)}canvas{pointer-events:none}.hud{position:absolute;top:9px;left:9px;right:9px;display:flex;justify-content:space-between;z-index:4;pointer-events:none}.chip,.panel,.msg{background:#020b15dc;border:1px solid #285878;border-radius:8px}.chip{padding:6px 8px;color:#86dcff;font:8px monospace}.monitor{position:absolute;top:40px;right:9px;width:190px;padding:8px;z-index:5;background:#020b15d9;border:1px solid #285878;border-radius:9px;font:8px monospace}.r{display:flex;justify-content:space-between;margin:3px 0}.r span:first-child{color:#7895a7}.controls{position:absolute;bottom:9px;left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:6}button{border:1px solid #285878;background:#061626e8;color:#e4f7ff;border-radius:8px;padding:8px 10px;font-size:9px;font-weight:800}button.active,button.primary{border-color:#58d5ff;color:#7de0ff}.upgrade{position:absolute;left:9px;bottom:56px;width:245px;max-height:46vh;overflow:auto;padding:8px;z-index:5;background:#020b15e8;border:1px solid #285878;border-radius:9px;font:8px monospace}.m{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}.m button{padding:5px 2px;font-size:7px}.slider{display:flex;gap:5px;align-items:center;margin:6px 0}.slider input{width:100%}.scene,.history{border-top:1px solid #244254;margin-top:6px;padding-top:6px;line-height:1.45}.history{max-height:85px;overflow:auto}.msg{display:none;position:absolute;left:50%;top:18%;transform:translateX(-50%);width:88%;padding:10px;text-align:center;z-index:10}.msg.show{display:block}.bottom{height:60px;flex:none;display:flex;gap:5px;padding:7px;background:#030b17;border-top:1px solid #163452}.bottom input{flex:1;min-width:0;border:1px solid #285878;border-radius:8px;background:#061626;color:#fff;padding:0 9px;font-size:16px}@media(max-width:600px){.monitor{width:175px}.upgrade{width:210px}}
-</style><header><div class="logo">FLUKE // JARVIS<small>LOCAL COMPUTER VISION</small></div><div id="status" class="status">● STARTING</div></header><main><video id="v" autoplay playsinline muted></video><canvas id="c"></canvas><div class="hud"><span class="chip">OBJECT AI</span><span class="chip" id="model">YOLO26n · ONNX</span></div><div class="monitor"><b>JARVIS MONITOR</b><div class="r"><span>TIME</span><span id="time">--:--:--</span></div><div class="r"><span>CAMERA</span><span id="cam">---</span></div><div class="r"><span>RES</span><span id="res">---</span></div><div class="r"><span>OBJECT FPS</span><span id="ofps">0</span></div><div class="r"><span>HAND FPS</span><span id="hfps">0</span></div><div class="r"><span>OBJECTS</span><span id="cnt">0</span></div><div class="r"><span>HANDS</span><span id="hcnt">0</span></div><div class="r"><span>GESTURE</span><span id="gest">NONE</span></div><div class="r"><span>POINTING</span><span id="point">NO</span></div></div><div class="upgrade"><b>JARVIS AI CONTROL</b><div class="m"><button id="normal" class="active">NORMAL</button><button id="silent">SILENT</button><button id="voiceMode">VOICE</button><button id="trackMode">TRACK</button><button id="scanMode">SCAN</button><button id="sceneBtn">ANALYZE</button><button id="clearBtn">CLEAR</button><button id="lockBtn">🔒 LOCK</button></div><div class="slider">CONF <input id="conf" type="range" min="20" max="90" step="5" value="35"><span id="cv">35%</span></div><div>MODE // <b id="mode">NORMAL</b></div><div id="scene" class="scene">ฉาก: กด ANALYZE เพื่อสรุปสิ่งที่เห็น</div><div id="history" class="history">ยังไม่มีประวัติ</div><div id="objs" class="history"></div></div><div id="msg" class="msg"></div><div class="controls"><button id="sw">🔄 กล้อง</button><button id="mir">🪞 สะท้อน</button><button id="scan" class="primary">● สแกน</button></div></main><div class="bottom"><input id="input" placeholder="พิมพ์ถาม JARVIS..." autocomplete="off"><button id="send" class="primary">ส่ง</button><button id="mic">🎤</button></div><script src="./ort/ort.min.js"></script><script type="module">
-const $=x=>document.getElementById(x),v=$("v"),c=$("c"),x=c.getContext("2d"),labels=["person","bicycle","car","motorcycle","airplane","bus","train","truck","boat","traffic light","fire hydrant","stop sign","parking meter","bench","bird","cat","dog","horse","sheep","cow","elephant","bear","zebra","giraffe","backpack","umbrella","handbag","tie","suitcase","frisbee","skis","snowboard","sports ball","kite","baseball bat","baseball glove","skateboard","surfboard","tennis racket","bottle","wine glass","cup","fork","knife","spoon","bowl","banana","apple","sandwich","orange","broccoli","carrot","hot dog","pizza","donut","cake","chair","couch","potted plant","bed","dining table","toilet","tv","laptop","mouse","remote","keyboard","cell phone","microwave","oven","toaster","sink","refrigerator","book","clock","vase","scissors","teddy bear","hair drier","toothbrush"],thai={person:"คน",bicycle:"จักรยาน",car:"รถยนต์",motorcycle:"มอเตอร์ไซค์",airplane:"เครื่องบิน",bus:"รถบัส",train:"รถไฟ",truck:"รถบรรทุก",boat:"เรือ",bird:"นก",cat:"แมว",dog:"สุนัข",horse:"ม้า",bottle:"ขวด",cup:"ถ้วย",chair:"เก้าอี้",couch:"โซฟา",laptop:"แล็ปท็อป","cell phone":"โทรศัพท์มือถือ",book:"หนังสือ",clock:"นาฬิกา",tv:"ทีวี",keyboard:"คีย์บอร์ด",mouse:"เมาส์"};let session,hand=null,stream,face="environment",mirror=false,thr=.35,objs=[],hands=[],tracks=[],next=1,target=null,hist=[],mode="NORMAL",busy=0,hbusy=0,last=0,hlast=0,of=0,hf=0,ot=performance.now(),ht=ot,scale=1,ox=0,oy=0,scanAt=0;
-const msg=(s,t=3500)=>{$("msg").innerHTML=s;$("msg").classList.add("show");clearTimeout(msg.t);msg.t=setTimeout(()=>$('msg').classList.remove("show"),t)},esc=s=>String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;"),txt=(i,s)=>$(i).textContent=s;
-async function buf(url,p){let r=await fetch(url);if(!r.ok)throw Error("HTTP "+r.status);if(!r.body){p?.(100);return r.arrayBuffer()}let q=r.body.getReader(),a=[],n=0,total=+r.headers.get("content-length")||0;for(;;){let z=await q.read();if(z.done)break;a.push(z.value);n+=z.value.length;if(total)p?.(Math.round(n/total*100))}let b=new Uint8Array(n),o=0;for(let z of a){b.set(z,o);o+=z.length}return b.buffer}
-function reset(){tracks=[];next=1;target=null;hist=[];renderHist();$("lockBtn").textContent="🔒 LOCK";$("lockBtn").classList.remove("active");targetBox()}
-async function camera(){try{reset();stream?.getTracks().forEach(t=>t.stop());stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:face},width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30,max:30}},audio:false});v.srcObject=stream;await v.play();resize();let s=stream.getVideoTracks()[0].getSettings();txt("cam",s.facingMode==="user"?"FRONT":"BACK");txt("res",`${s.width||v.videoWidth}×${s.height||v.videoHeight}`);$("status").textContent="● CAMERA READY";$("status").className="status ok"}catch(e){$("status").textContent="● CAMERA ERROR";$("status").className="status err";msg("เปิดกล้องไม่ได้<br><br>"+esc(e.message))}}
-function resize(){if(v.videoWidth){c.width=v.videoWidth;c.height=v.videoHeight;draw()}}
-function tensor(){let w=v.videoWidth,h=v.videoHeight;scale=Math.min(640/w,640/h);ox=(640-w*scale)/2;oy=(640-h*scale)/2;let z=document.createElement("canvas");z.width=z.height=640;let q=z.getContext("2d",{willReadFrequently:true});q.fillStyle="rgb(114,114,114)";q.fillRect(0,0,640,640);q.drawImage(v,ox,oy,w*scale,h*scale);let d=q.getImageData(0,0,640,640).data,a=409600,f=new Float32Array(a*3);for(let i=0;i<a;i++){let k=i*4;f[i]=d[k]/255;f[a+i]=d[k+1]/255;f[a*2+i]=d[k+2]/255}return new ort.Tensor("float32",f,[1,3,640,640])}
-function add(a,x1,y1,x2,y2,s,id){s=+s;id=Math.trunc(+id);if(!Number.isFinite(s)||s<thr||id<0||id>=labels.length)return;let m=Math.max(Math.abs(x1),Math.abs(y1),Math.abs(x2),Math.abs(y2));if(m<=2)[x1,y1,x2,y2]=[x1*640,y1*640,x2*640,y2*640];[x1,y1,x2,y2]=[x1,y1,x2,y2].map(Number);x1=Math.max(0,Math.min(640,x1));y1=Math.max(0,Math.min(640,y1));x2=Math.max(0,Math.min(640,x2));y2=Math.max(0,Math.min(640,y2));if(x2>x1&&y2>y1)a.push({x1,y1,x2,y2,confidence:s,classId:id,label:labels[id]})}
-function iou(a,b){let w=Math.max(0,Math.min(a.x2,b.x2)-Math.max(a.x1,b.x1)),h=Math.max(0,Math.min(a.y2,b.y2)-Math.max(a.y1,b.y1)),z=w*h,A=(a.x2-a.x1)*(a.y2-a.y1),B=(b.x2-b.x1)*(b.y2-b.y1);return z/(A+B-z+1e-6)}
-function parse(o){if(!o?.data||o.dims?.length!==3)return[];let d=o.data,a=o.dims[1],b=o.dims[2],r=[];if(b===6)for(let i=0;i<a;i++){let k=i*6;add(r,d[k],d[k+1],d[k+2],d[k+3],d[k+4],d[k+5])}else if(a===6)for(let i=0;i<b;i++)add(r,d[i],d[b+i],d[b*2+i],d[b*3+i],d[b*4+i],d[b*5+i]);else if(a===84)for(let i=0;i<b;i++){let s=-1,m=-1;for(let j=0;j<80;j++){let q=+d[(j+4)*b+i];if(q>m){m=q;s=j}}let X=+d[i],Y=+d[b+i],W=+d[2*b+i],H=+d[3*b+i];add(r,X-W/2,Y-H/2,X+W/2,Y+H/2,m,s)}else if(b===84)for(let i=0;i<a;i++){let k=i*84,s=-1,m=-1;for(let j=0;j<80;j++){let q=+d[k+4+j];if(q>m){m=q;s=j}}let X=+d[k],Y=+d[k+1],W=+d[k+2],H=+d[k+3];add(r,X-W/2,Y-H/2,X+W/2,Y+H/2,m,s)}r.sort((a,b)=>b.confidence-a.confidence);let n=[];for(let z of r){if(n.some(q=>q.classId===z.classId&&iou(q,z)>.45))continue;n.push(z);if(n.length>=40)break}return n}
-async function detect(){let r=await session.run({[session.inputNames[0]]:tensor()});return parse(r[session.outputNames[0]])}
-function map(a,b){return{x:(a-ox)/scale,y:(b-oy)/scale}}
-function track(raw){let now=performance.now(),used=new Set(),out=[];for(let o of raw){let best=null,bs=0;for(let t of tracks){if(used.has(t.id)||t.label!==o.label)continue;let s=iou(t,o);if(s>bs){bs=s;best=t}}if(best){Object.assign(best,o,{lastSeen:now,missed:0});used.add(best.id);out.push({...o,id:best.id})}else{let t={...o,id:next++,lastSeen:now,missed:0};tracks.push(t);used.add(t.id);out.push(t);hist.unshift({time:new Date().toLocaleTimeString("th-TH",{hour12:false}),label:t.label,id:t.id,confidence:t.confidence});hist=hist.slice(0,30);speak(t.label,t.id)}}for(let t of tracks)if(!used.has(t.id))t.missed++;tracks=tracks.filter(t=>t.missed<5);return out.sort((a,b)=>b.confidence-a.confidence)}
-function update(raw){objs=track(raw||[]);txt("cnt",objs.length);$("objs").innerHTML=objs.slice(0,8).map(o=>`<div class="r"><span>#${o.id} ${esc(thai[o.label]||o.label)}</span><span>${Math.round(o.confidence*100)}%</span></div>`).join("")||"No objects detected";renderHist();targetBox()}
-function renderHist(){$("history").innerHTML=hist.slice(0,12).map(h=>`<div>[${h.time}] #${h.id} ${esc(thai[h.label]||h.label)} ${Math.round(h.confidence*100)}%</div>`).join("")||"ยังไม่มีประวัติ"}
-function speak(l,id){if(mode==="SILENT"||!window.speechSynthesis)return;let k=l+id,n=Date.now();if(k===speak.k&&n-speak.t<5000)return;speak.k=k;speak.t=n;speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(`ตรวจพบ ${thai[l]||l}`);u.lang="th-TH";speechSynthesis.speak(u)}
-function targetBox(){if(target==null){$("lockBtn").classList.remove("active");return}let o=objs.find(q=>q.id===target);if(!o){$("lockBtn").classList.remove("active");return}let a=map(o.x1,o.y1),b=map(o.x2,o.y2),px=(a.x+b.x)/2;if(mirror)px=c.width-px;$("lockBtn").classList.add("active");msg.targetX=px/c.width*100;msg.targetY=(a.y+b.y)/c.height*100}
-function draw(){if(!c.width)return;x.clearRect(0,0,c.width,c.height);for(let o of objs){let a=map(o.x1,o.y1),b=map(o.x2,o.y2),x1=a.x,x2=b.x;if(mirror){let q=x1;x1=c.width-x2;x2=c.width-q}x.strokeStyle=o.id===target?"#ffdc72":"#55d5ff";x.lineWidth=2;x.strokeRect(x1,a.y,x2-x1,b.y-a.y);let s=`#${o.id} ${thai[o.label]||o.label} ${Math.round(o.confidence*100)}%`;x.font="bold 12px Arial";x.fillStyle="#020b15e8";x.fillRect(x1,Math.max(0,a.y-19),x.measureText(s).width+8,19);x.fillStyle="#fff";x.fillText(s,x1+4,Math.max(14,a.y-5))}for(let h of hands)drawHand(h)}
-const con=[[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[0,17],[17,18],[18,19],[19,20]];function drawHand(l){if(!l?.length)return;let p=q=>({x:(mirror?1-q.x:q.x)*c.width,y:q.y*c.height});x.strokeStyle="#ffdc72";x.lineWidth=2;for(let [a,b] of con){let A=p(l[a]),B=p(l[b]);x.beginPath();x.moveTo(A.x,A.y);x.lineTo(B.x,B.y);x.stroke()}x.fillStyle="#fff";for(let q of l){let A=p(q);x.beginPath();x.arc(A.x,A.y,2.5,0,7);x.fill()}}
-function gest(l){if(!l||l.length<21)return"NONE";let a=l[8].y<l[6].y,b=l[12].y<l[10].y,d=l[16].y<l[14].y,e=l[20].y<l[18].y;if(!a&&!b&&!d&&!e)return l[4].y<l[6].y?"THUMBS UP":"FIST";if(a&&!b&&!d&&!e)return"POINTING";if(a&&b&&!d&&!e)return"VICTORY";if(a&&b&&d&&e&&Math.hypot(l[4].x-l[8].x,l[4].y-l[8].y)<.08)return"OK";if(a&&b&&d&&e)return"OPEN HAND";return"HAND"}
-function handsUI(){txt("hcnt",hands.length);let g=gest(hands[0]);txt("gest",g);txt("point",g==="POINTING"?"YES":"NO")}
-async function loop(n){requestAnimationFrame(loop);if(!session||busy||!v.videoWidth||n-last<180)return;last=n;busy=1;try{update(await detect());draw();handsUI();of++;let e=performance.now()-ot;if(e>1000){txt("ofps",(of*1000/e).toFixed(1));of=0;ot=performance.now()}if(mode==="SCAN"&&Date.now()-scanAt>8000){scene();scanAt=Date.now()}}catch(e){console.warn(e)}finally{busy=0}}
-async function handLoop(n){requestAnimationFrame(handLoop);if(!hand||hbusy||!v.videoWidth||n-hlast<100)return;hlast=n;hbusy=1;try{hands=hand.detectForVideo(v,n).landmarks||[];handsUI();draw();hf++;let e=performance.now()-ht;if(e>1000){txt("hfps",(hf*1000/e).toFixed(1));hf=0;ht=performance.now()}}catch(e){console.warn(e)}finally{hbusy=0}}
-function scene(){if(!objs.length){$("scene").textContent="ฉาก: ยังไม่พบวัตถุ";return}let m={};for(let o of objs)m[o.label]=(m[o.label]||0)+1;let s=`ตรวจพบ ${objs.length} เป้าหมาย — ${Object.entries(m).map(([k,n])=>`${thai[k]||k} ${n}`).join(" • ")}`;$("scene").textContent=s;if(mode!=="SILENT"&&window.speechSynthesis){let u=new SpeechSynthesisUtterance(s);u.lang="th-TH";speechSynthesis.cancel();speechSynthesis.speak(u)}}
-async function loadObject(){try{ort.env.wasm.wasmPaths=new URL("./ort/",document.baseURI).href;ort.env.wasm.numThreads=1;let b=await buf("./models/yolo26n.onnx",p=>txt("model",`YOLO26n · ${p}%`));session=await ort.InferenceSession.create(b,{executionProviders:["wasm"],graphOptimizationLevel:"basic"});txt("model","YOLO26n · READY");requestAnimationFrame(loop);$("status").textContent="● JARVIS AI READY";$("status").className="status ok"}catch(e){txt("model","YOLO26n · ERROR");$("status").textContent="● OBJECT AI ERROR";$("status").className="status err";msg("Object AI โหลดไม่สำเร็จ<br><br>"+esc(e.message),7000)}}
-async function loadHand(){try{let u=["https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/+esm","https://esm.sh/@mediapipe/tasks-vision@0.10.22","https://unpkg.com/@mediapipe/tasks-vision@0.10.22/vision_bundle.mjs"],mp=null;for(let z of u)try{mp=await Promise.race([import(z),new Promise((_,r)=>setTimeout(()=>r(Error("timeout")),10000))]);if(mp?.HandLandmarker)break;mp=null}catch(e){}if(!mp)throw Error("MediaPipe unavailable");let fs=await mp.FilesetResolver.forVisionTasks("./mediapipe/wasm").catch(()=>mp.FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm")),b=await buf("./models/hand_landmarker.task");try{hand=await mp.HandLandmarker.createFromOptions(fs,{baseOptions:{modelAssetBuffer:b,delegate:"GPU"},runningMode:"VIDEO",numHands:2,minHandDetectionConfidence:.45,minHandPresenceConfidence:.45,minTrackingConfidence:.45})}catch(e){hand=await mp.HandLandmarker.createFromOptions(fs,{baseOptions:{modelAssetBuffer:b,delegate:"CPU"},runningMode:"VIDEO",numHands:2,minHandDetectionConfidence:.45,minHandPresenceConfidence:.45,minTrackingConfidence:.45})}requestAnimationFrame(handLoop)}catch(e){console.warn("Hand AI disabled",e)}}
-$("sw").onclick=async()=>{face=face==="environment"?"user":"environment";await camera()};$("mir").onclick=()=>{mirror=!mirror;v.classList.toggle("mirror",mirror);$("mir").classList.toggle("active",mirror);draw();targetBox()};$("scan").onclick=async()=>{if(!session)return msg("Object AI ยังไม่พร้อม");if(busy)return msg("AI กำลังวิเคราะห์...");busy=1;try{update(await detect());draw();handsUI()}catch(e){msg(esc(e.message))}finally{busy=0}};$("conf").oninput=e=>{thr=+e.target.value/100;txt("cv",e.target.value+"%")};for(let [id,m] of [["normal","NORMAL"],["silent","SILENT"],["voiceMode","VOICE"],["trackMode","TRACK"],["scanMode","SCAN"]])$(id).onclick=()=>{mode=m;txt("mode",m);document.querySelectorAll(".m button").forEach(b=>b.classList.remove("active"));$(id).classList.add("active");if(m==="SCAN")scanAt=Date.now()};$("sceneBtn").onclick=scene;$("clearBtn").onclick=()=>{hist=[];renderHist()};$("lockBtn").onclick=()=>{if(target==null&&objs.length){target=objs[0].id;$("lockBtn").textContent="🔓 UNLOCK"}else{target=null;$("lockBtn").textContent="🔒 LOCK";$("lockBtn").classList.remove("active")}draw();targetBox()};let rec=null;if(window.SpeechRecognition||window.webkitSpeechRecognition){let R=window.SpeechRecognition||window.webkitSpeechRecognition;rec=new R;rec.lang="th-TH";rec.onresult=e=>{$("input").value=e.results[0][0].transcript;chat()}}function chat(){let s=$("input").value.trim();if(!s)return;msg("💬 JARVIS<br><br>"+esc(s));$("input").value=""}$("send").onclick=chat;$("input").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();chat()}};$("mic").onclick=()=>{if(!rec)return msg("เบราว์เซอร์นี้ไม่รองรับ Voice");try{rec.start()}catch(e){}};setInterval(()=>txt("time",new Date().toLocaleTimeString("th-TH",{hour12:false})),1000);v.onloadedmetadata=()=>{resize();let s=stream?.getVideoTracks()[0]?.getSettings();if(s){txt("cam",s.facingMode==="user"?"FRONT":"BACK");txt("res",`${s.width||v.videoWidth}×${s.height||v.videoHeight}`)}};addEventListener("resize",resize);reset();camera();loadObject();loadHand();
-</script></html>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+
+<title>OBJECT AI · JARVIS</title>
+
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.min.js"></script>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+:root{
+    --bg:#02070d;
+    --panel:rgba(5,16,27,.88);
+    --line:rgba(65,185,255,.20);
+    --blue:#42baff;
+    --cyan:#70eaff;
+    --green:#48e6a0;
+    --yellow:#ffd65c;
+    --red:#ff526b;
+    --text:#e5f7ff;
+    --muted:#638196;
+}
+
+html,body{
+    width:100%;
+    min-height:100%;
+}
+
+body{
+    background:
+        radial-gradient(
+            circle at 50% -10%,
+            #123b5c 0,
+            #071827 30%,
+            #02070d 72%
+        );
+
+    color:var(--text);
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    overflow-x:hidden;
+}
+
+body::before{
+    content:"";
+
+    position:fixed;
+    inset:0;
+
+    pointer-events:none;
+
+    opacity:.13;
+
+    background:
+        linear-gradient(
+            rgba(70,190,255,.035) 1px,
+            transparent 1px
+        ),
+        linear-gradient(
+            90deg,
+            rgba(70,190,255,.035) 1px,
+            transparent 1px
+        );
+
+    background-size:32px 32px;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+header{
+    position:sticky;
+    top:0;
+    z-index:100;
+
+    height:64px;
+
+    padding:0 16px;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    background:rgba(1,7,13,.92);
+
+    backdrop-filter:blur(16px);
+
+    border-bottom:1px solid var(--line);
+}
+
+.brand{
+    display:flex;
+    align-items:center;
+    gap:11px;
+}
+
+.brand-core{
+    width:35px;
+    height:35px;
+
+    border:1px solid var(--blue);
+
+    border-radius:50%;
+
+    display:grid;
+    place-items:center;
+
+    box-shadow:
+        0 0 20px rgba(66,186,255,.3);
+}
+
+.brand-core::after{
+    content:"";
+
+    width:11px;
+    height:11px;
+
+    border-radius:50%;
+
+    background:var(--cyan);
+
+    box-shadow:
+        0 0 18px var(--cyan);
+}
+
+.brand-name{
+    font-size:17px;
+    font-weight:900;
+    letter-spacing:2.5px;
+}
+
+.brand-name span{
+    color:var(--blue);
+}
+
+.status{
+    display:flex;
+    align-items:center;
+    gap:7px;
+
+    font:
+        9px monospace;
+
+    color:#89a6b8;
+}
+
+.status-dot{
+    width:8px;
+    height:8px;
+
+    border-radius:50%;
+
+    background:#45545f;
+}
+
+.status-dot.ready{
+    background:var(--green);
+
+    box-shadow:
+        0 0 12px var(--green);
+}
+
+.status-dot.error{
+    background:var(--red);
+
+    box-shadow:
+        0 0 12px var(--red);
+}
+
+/* =========================
+   MAIN
+========================= */
+
+main{
+    width:min(1250px,100%);
+
+    margin:auto;
+
+    padding:14px;
+}
+
+/* =========================
+   CAMERA
+========================= */
+
+.camera{
+    position:relative;
+
+    width:100%;
+
+    aspect-ratio:16/10;
+
+    min-height:300px;
+
+    overflow:hidden;
+
+    background:#000;
+
+    border:
+        1px solid var(--line);
+
+    border-radius:18px;
+
+    box-shadow:
+        0 20px 60px rgba(0,0,0,.5);
+}
+
+#video{
+    position:absolute;
+
+    inset:0;
+
+    width:100%;
+    height:100%;
+
+    object-fit:cover;
+}
+
+#canvas{
+    position:absolute;
+
+    inset:0;
+
+    width:100%;
+    height:100%;
+
+    pointer-events:none;
+}
+
+.camera.mirror #video{
+    transform:scaleX(-1);
+}
+
+.camera.mirror #canvas{
+    transform:scaleX(-1);
+}
+
+.camera-ui{
+    position:absolute;
+
+    inset:0;
+
+    pointer-events:none;
+}
+
+.corner{
+    position:absolute;
+
+    width:38px;
+    height:38px;
+
+    border-color:var(--blue);
+
+    opacity:.9;
+}
+
+.corner.tl{
+    top:14px;
+    left:14px;
+
+    border-top:2px solid;
+    border-left:2px solid;
+}
+
+.corner.tr{
+    top:14px;
+    right:14px;
+
+    border-top:2px solid;
+    border-right:2px solid;
+}
+
+.corner.bl{
+    bottom:14px;
+    left:14px;
+
+    border-bottom:2px solid;
+    border-left:2px solid;
+}
+
+.corner.br{
+    bottom:14px;
+    right:14px;
+
+    border-bottom:2px solid;
+    border-right:2px solid;
+}
+
+.hud{
+    position:absolute;
+
+    top:16px;
+    left:20px;
+    right:20px;
+
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+}
+
+.chip{
+    padding:7px 9px;
+
+    border:
+        1px solid rgba(75,190,255,.22);
+
+    border-radius:7px;
+
+    background:
+        rgba(0,7,13,.65);
+
+    backdrop-filter:blur(7px);
+
+    color:#8fdcff;
+
+    font:
+        9px monospace;
+}
+
+.bottom-hud{
+    position:absolute;
+
+    left:20px;
+    right:20px;
+    bottom:16px;
+
+    display:flex;
+    justify-content:space-between;
+
+    font:
+        9px monospace;
+
+    color:#87a7b9;
+}
+
+.scan{
+    position:absolute;
+
+    left:4%;
+    right:4%;
+
+    top:5%;
+
+    height:1px;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(80,220,255,.75),
+            transparent
+        );
+
+    box-shadow:
+        0 0 12px rgba(80,220,255,.7);
+
+    animation:
+        scan 4s linear infinite;
+
+    opacity:.5;
+}
+
+@keyframes scan{
+    0%{
+        top:5%;
+    }
+
+    50%{
+        top:95%;
+    }
+
+    100%{
+        top:5%;
+    }
+}
+
+.loader{
+    position:absolute;
+
+    inset:0;
+
+    z-index:20;
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+    justify-content:center;
+
+    gap:12px;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(9,40,62,.96),
+            rgba(1,7,13,.99)
+        );
+}
+
+.loader.hidden{
+    display:none;
+}
+
+.loader-core{
+    width:70px;
+    height:70px;
+
+    border:
+        1px solid rgba(90,210,255,.4);
+
+    border-radius:50%;
+
+    display:grid;
+    place-items:center;
+
+    animation:
+        pulse 1.8s ease-in-out infinite;
+}
+
+.loader-core::after{
+    content:"";
+
+    width:18px;
+    height:18px;
+
+    border-radius:50%;
+
+    background:var(--cyan);
+
+    box-shadow:
+        0 0 24px var(--cyan);
+}
+
+@keyframes pulse{
+    50%{
+        transform:scale(1.08);
+
+        box-shadow:
+            0 0 35px rgba(70,210,255,.3);
+    }
+}
+
+.loader-title{
+    font-weight:900;
+    letter-spacing:1px;
+}
+
+.loader-text{
+    max-width:350px;
+
+    padding:0 20px;
+
+    text-align:center;
+
+    color:#6c8b9e;
+
+    font:
+        10px monospace;
+
+    line-height:1.6;
+}
+
+/* =========================
+   CONTROLS
+========================= */
+
+.controls{
+    display:grid;
+
+    grid-template-columns:
+        repeat(4,1fr);
+
+    gap:8px;
+
+    margin-top:10px;
+}
+
+button{
+    min-height:45px;
+
+    border:
+        1px solid rgba(70,180,255,.22);
+
+    border-radius:9px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #153a57,
+            #0a1d2f
+        );
+
+    color:var(--text);
+
+    font-size:10px;
+
+    font-weight:900;
+
+    letter-spacing:.4px;
+}
+
+button:active{
+    transform:scale(.97);
+}
+
+button.primary{
+    background:
+        linear-gradient(
+            180deg,
+            #138bd1,
+            #07517e
+        );
+}
+
+button.active{
+    border-color:var(--cyan);
+
+    color:var(--cyan);
+
+    box-shadow:
+        0 0 14px rgba(70,210,255,.18);
+}
+
+button.danger{
+    background:
+        linear-gradient(
+            180deg,
+            #702b3c,
+            #39151e
+        );
+}
+
+/* =========================
+   TELEMETRY
+========================= */
+
+.telemetry{
+    display:grid;
+
+    grid-template-columns:
+        repeat(6,1fr);
+
+    gap:8px;
+
+    margin-top:10px;
+}
+
+.metric{
+    min-width:0;
+
+    padding:11px;
+
+    border:
+        1px solid var(--line);
+
+    border-radius:11px;
+
+    background:var(--panel);
+}
+
+.metric-label{
+    color:var(--muted);
+
+    font-size:8px;
+
+    letter-spacing:1.2px;
+
+    margin-bottom:5px;
+}
+
+.metric-value{
+    font-size:16px;
+
+    font-weight:900;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+}
+
+.metric-unit{
+    color:#63879a;
+
+    font-size:8px;
+
+    margin-left:2px;
+}
+
+/* =========================
+   PANELS
+========================= */
+
+.grid{
+    display:grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap:10px;
+
+    margin-top:10px;
+}
+
+.panel{
+    min-width:0;
+
+    padding:13px;
+
+    border:
+        1px solid var(--line);
+
+    border-radius:13px;
+
+    background:var(--panel);
+}
+
+.panel-title{
+    display:flex;
+
+    align-items:center;
+    justify-content:space-between;
+
+    margin-bottom:10px;
+
+    color:#65c8ff;
+
+    font-size:10px;
+
+    font-weight:900;
+
+    letter-spacing:1.4px;
+}
+
+.panel-state{
+    color:#536f82;
+
+    font:
+        8px monospace;
+}
+
+/* =========================
+   OBJECTS
+========================= */
+
+.objects{
+    display:flex;
+
+    flex-direction:column;
+
+    gap:6px;
+
+    max-height:260px;
+
+    overflow-y:auto;
+}
+
+.object{
+    display:flex;
+
+    align-items:center;
+    justify-content:space-between;
+
+    gap:8px;
+
+    padding:8px 9px;
+
+    border-radius:8px;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(45,140,200,.13),
+            rgba(45,140,200,.025)
+        );
+
+    border-left:
+        2px solid var(--blue);
+}
+
+.object-left{
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    min-width:0;
+}
+
+.object-index{
+    color:#4b7890;
+
+    font:
+        9px monospace;
+}
+
+.object-name{
+    font-size:10px;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    text-overflow:ellipsis;
+}
+
+.object-score{
+    color:#68d3ff;
+
+    font:
+        900 9px monospace;
+}
+
+.empty{
+    padding:25px 5px;
+
+    text-align:center;
+
+    color:#536e80;
+
+    font:
+        10px monospace;
+}
+
+/* =========================
+   SYSTEM
+========================= */
+
+.system{
+    display:grid;
+
+    gap:6px;
+}
+
+.system-row{
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    padding:8px 9px;
+
+    border-radius:8px;
+
+    background:
+        rgba(255,255,255,.025);
+}
+
+.system-label{
+    color:#668398;
+
+    font-size:9px;
+}
+
+.system-value{
+    color:#c9e8f5;
+
+    font:
+        9px monospace;
+}
+
+.good{
+    color:var(--green);
+}
+
+.warn{
+    color:var(--yellow);
+}
+
+.bad{
+    color:var(--red);
+}
+
+/* =========================
+   GRAPH
+========================= */
+
+.graph{
+    margin-top:10px;
+}
+
+.graph canvas{
+    width:100%;
+
+    height:150px;
+
+    display:block;
+
+    border-radius:9px;
+
+    background:
+        rgba(0,0,0,.16);
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media(max-width:800px){
+
+    .telemetry{
+        grid-template-columns:
+            repeat(3,1fr);
+    }
+
+    .grid{
+        grid-template-columns:1fr;
+    }
+}
+
+@media(max-width:500px){
+
+    main{
+        padding:9px;
+    }
+
+    .camera{
+        min-height:260px;
+
+        aspect-ratio:4/3;
+    }
+
+    .controls{
+        grid-template-columns:
+            repeat(2,1fr);
+    }
+
+    .telemetry{
+        grid-template-columns:
+            repeat(2,1fr);
+    }
+
+    .brand-name{
+        font-size:14px;
+    }
+
+    .status{
+        font-size:8px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+
+    <div class="brand">
+
+        <div class="brand-core"></div>
+
+        <div class="brand-name">
+            OBJECT <span>AI</span>
+        </div>
+
+    </div>
+
+    <div class="status">
+
+        <div
+            id="statusDot"
+            class="status-dot">
+        </div>
+
+        <span id="statusText">
+            INITIALIZING
+        </span>
+
+    </div>
+
+</header>
+
+<main>
+
+<section class="camera" id="camera">
+
+    <video
+        id="video"
+        autoplay
+        playsinline
+        muted>
+    </video>
+
+    <canvas id="canvas"></canvas>
+
+    <div class="camera-ui">
+
+        <div class="corner tl"></div>
+        <div class="corner tr"></div>
+        <div class="corner bl"></div>
+        <div class="corner br"></div>
+
+        <div class="hud">
+
+            <div class="chip">
+                OBJECT DETECTION
+            </div>
+
+            <div class="chip">
+                YOLOv8n · ONNX
+            </div>
+
+        </div>
+
+        <div class="bottom-hud">
+
+            <span id="cameraStatus">
+                CAMERA OFF
+            </span>
+
+            <span id="modelStatus">
+                MODEL OFFLINE
+            </span>
+
+        </div>
+
+        <div class="scan"></div>
+
+    </div>
+
+    <div
+        id="loader"
+        class="loader">
+
+        <div class="loader-core"></div>
+
+        <div class="loader-title">
+            OBJECT AI
+        </div>
+
+        <div
+            id="loaderText"
+            class="loader-text">
+            Loading neural network...
+        </div>
+
+    </div>
+
+</section>
+
+<div class="controls">
+
+    <button
+        id="startBtn"
+        class="primary">
+        START CAMERA
+    </button>
+
+    <button id="stopBtn">
+        STOP
+    </button>
+
+    <button
+        id="flipBtn"
+        class="active">
+        FLIP CAMERA
+    </button>
+
+    <button id="pauseBtn">
+        PAUSE AI
+    </button>
+
+</div>
+
+<section class="telemetry">
+
+    <div class="metric">
+
+        <div class="metric-label">
+            FPS
+        </div>
+
+        <div class="metric-value">
+            <span id="fps">
+                0
+            </span>
+
+            <span class="metric-unit">
+                FPS
+            </span>
+        </div>
+
+    </div>
+
+    <div class="metric">
+
+        <div class="metric-label">
+            INFERENCE
+        </div>
+
+        <div class="metric-value">
+            <span id="inference">
+                0
+            </span>
+
+            <span class="metric-unit">
+                MS
+            </span>
+        </div>
+
+    </div>
+
+    <div class="metric">
+
+        <div class="metric-label">
+            OBJECTS
+        </div>
+
+        <div class="metric-value">
+            <span id="objectCount">
+                0
+            </span>
+        </div>
+
+    </div>
+
+    <div class="metric">
+
+        <div class="metric-label">
+            AI FPS
+        </div>
+
+        <div class="metric-value">
+            <span id="aiFps">
+                0
+            </span>
+        </div>
+
+    </div>
+
+    <div class="metric">
+
+        <div class="metric-label">
+            INPUT
+        </div>
+
+        <div class="metric-value">
+            <span id="inputSize">
+                640
+            </span>
+            <span class="metric-unit">
+                PX
+            </span>
+        </div>
+
+    </div>
+
+    <div class="metric">
+
+        <div class="metric-label">
+            CONFIDENCE
+        </div>
+
+        <div class="metric-value">
+            <span id="confidence">
+                50
+            </span>
+            <span class="metric-unit">
+                %
+            </span>
+        </div>
+
+    </div>
+
+</section>
+
+<section class="grid">
+
+    <div class="panel">
+
+        <div class="panel-title">
+
+            <span>
+                DETECTED OBJECTS
+            </span>
+
+            <span
+                id="objectState"
+                class="panel-state">
+                WAITING
+            </span>
+
+        </div>
+
+        <div
+            id="objects"
+            class="objects">
+
+            <div class="empty">
+                No objects detected
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="panel">
+
+        <div class="panel-title">
+
+            <span>
+                SYSTEM
+            </span>
+
+            <span class="panel-state">
+                LIVE
+            </span>
+
+        </div>
+
+        <div class="system">
+
+            <div class="system-row">
+
+                <span class="system-label">
+                    MODEL
+                </span>
+
+                <span
+                    id="sysModel"
+                    class="system-value">
+                    Loading
+                </span>
+
+            </div>
+
+            <div class="system-row">
+
+                <span class="system-label">
+                    CAMERA
+                </span>
+
+                <span
+                    id="sysCamera"
+                    class="system-value">
+                    Offline
+                </span>
+
+            </div>
+
+            <div class="system-row">
+
+                <span class="system-label">
+                    ENGINE
+                </span>
+
+                <span
+                    id="sysEngine"
+                    class="system-value">
+                    ONNX Runtime
+                </span>
+
+            </div>
+
+            <div class="system-row">
+
+                <span class="system-label">
+                    BACKEND
+                </span>
+
+                <span
+                    id="sysBackend"
+                    class="system-value">
+                    Detecting
+                </span>
+
+            </div>
+
+            <div class="system-row">
+
+                <span class="system-label">
+                    DEVICE
+                </span>
+
+                <span
+                    id="sysDevice"
+                    class="system-value">
+                    Browser
+                </span>
+
+            </div>
+
+            <div class="system-row">
+
+                <span class="system-label">
+                    STATUS
+                </span>
+
+                <span
+                    id="sysStatus"
+                    class="system-value warn">
+                    Initializing
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<section class="panel graph">
+
+    <div class="panel-title">
+
+        <span>
+            PERFORMANCE
+        </span>
+
+        <span
+            id="performanceState"
+            class="panel-state">
+            MONITORING
+        </span>
+
+    </div>
+
+    <canvas id="graphCanvas"></canvas>
+
+</section>
+
+</main>
+
+<script>
+
+/* =========================================================
+   OBJECT AI
+   YOLOv8n + ONNX Runtime Web
+========================================================= */
+
+/* =========================
+   CONFIG
+========================= */
+
+const CONFIG = {
+
+    MODEL_URL:
+        "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n.onnx",
+
+    INPUT_SIZE:
+        640,
+
+    CONFIDENCE:
+        0.50,
+
+    IOU:
+        0.45,
+
+    MAX_DETECTIONS:
+        40,
+
+    START_AI_FPS:
+        12,
+
+    MIN_AI_FPS:
+        5,
+
+    MAX_AI_FPS:
+        15,
+
+    MIN_INPUT:
+        320,
+
+    MAX_INPUT:
+        640,
+
+    ADAPTIVE:
+        true
+
+};
+
+
+/* =========================
+   COCO CLASSES
+========================= */
+
+const CLASSES = [
+
+    "person",
+    "bicycle",
+    "car",
+    "motorcycle",
+    "airplane",
+    "bus",
+    "train",
+    "truck",
+    "boat",
+    "traffic light",
+    "fire hydrant",
+    "stop sign",
+    "parking meter",
+    "bench",
+    "bird",
+    "cat",
+    "dog",
+    "horse",
+    "sheep",
+    "cow",
+    "elephant",
+    "bear",
+    "zebra",
+    "giraffe",
+    "backpack",
+    "umbrella",
+    "handbag",
+    "tie",
+    "suitcase",
+    "frisbee",
+    "skis",
+    "snowboard",
+    "sports ball",
+    "kite",
+    "baseball bat",
+    "baseball glove",
+    "skateboard",
+    "surfboard",
+    "tennis racket",
+    "bottle",
+    "wine glass",
+    "cup",
+    "fork",
+    "knife",
+    "spoon",
+    "bowl",
+    "banana",
+    "apple",
+    "sandwich",
+    "orange",
+    "broccoli",
+    "carrot",
+    "hot dog",
+    "pizza",
+    "donut",
+    "cake",
+    "chair",
+    "couch",
+    "potted plant",
+    "bed",
+    "dining table",
+    "toilet",
+    "tv",
+    "laptop",
+    "mouse",
+    "remote",
+    "keyboard",
+    "cell phone",
+    "microwave",
+    "oven",
+    "toaster",
+    "sink",
+    "refrigerator",
+    "book",
+    "clock",
+    "vase",
+    "scissors",
+    "teddy bear",
+    "hair drier",
+    "toothbrush"
+
+];
+
+
+/* =========================
+   DOM
+========================= */
+
+const video =
+    document.getElementById("video");
+
+const canvas =
+    document.getElementById("canvas");
+
+const ctx =
+    canvas.getContext("2d", {
+        alpha:true
+    });
+
+const graphCanvas =
+    document.getElementById("graphCanvas");
+
+const graphCtx =
+    graphCanvas.getContext("2d");
+
+const camera =
+    document.getElementById("camera");
+
+const loader =
+    document.getElementById("loader");
+
+const loaderText =
+    document.getElementById("loaderText");
+
+const objectsEl =
+    document.getElementById("objects");
+
+const statusDot =
+    document.getElementById("statusDot");
+
+const statusText =
+    document.getElementById("statusText");
+
+
+/* =========================
+   STATE
+========================= */
+
+let session =
+    null;
+
+let stream =
+    null;
+
+let running =
+    false;
+
+let paused =
+    false;
+
+let processing =
+    false;
+
+let mirror =
+    true;
+
+let lastFrameTime =
+    performance.now();
+
+let lastInferenceTime =
+    0;
+
+let fps =
+    0;
+
+let aiFps =
+    0;
+
+let frameCounter =
+    0;
+
+let inferenceCounter =
+    0;
+
+let fpsTimer =
+    performance.now();
+
+let aiFpsTimer =
+    performance.now();
+
+let aiTargetFps =
+    CONFIG.START_AI_FPS;
+
+let inputSize =
+    CONFIG.INPUT_SIZE;
+
+let lastDetections =
+    [];
+
+let performanceHistory =
+    [];
+
+let adaptiveTimer =
+    0;
+
+let cameraFacing =
+    "user";
+
+
+/* =========================
+   TEMP CANVAS
+========================= */
+
+const inputCanvas =
+    document.createElement("canvas");
+
+const inputCtx =
+    inputCanvas.getContext("2d", {
+        willReadFrequently:true
+    });
+
+
+/* =========================
+   STATUS
+========================= */
+
+function setStatus(
+    text,
+    type=""
+){
+
+    statusText.textContent =
+        text;
+
+    statusDot.className =
+        "status-dot " + type;
+
+}
+
+
+/* =========================
+   LOADER
+========================= */
+
+function loaderMessage(
+    text
+){
+
+    loaderText.textContent =
+        text;
+
+}
+
+
+/* =========================
+   MODEL LOAD
+========================= */
+
+async function loadModel(){
+
+    try{
+
+        setStatus(
+            "LOADING MODEL"
+        );
+
+        loaderMessage(
+            "Downloading YOLOv8 neural network..."
+        );
+
+        if(
+            !window.ort
+        ){
+
+            throw new Error(
+                "ONNX Runtime failed to load"
+            );
+
+        }
+
+        /*
+         * WebGPU is attempted first.
+         * WASM is used as reliable fallback.
+         */
+
+        let providers = [];
+
+        if(
+            navigator.gpu
+        ){
+
+            providers.push(
+                "webgpu"
+            );
+
+        }
+
+        providers.push(
+            "wasm"
+        );
+
+        for(
+            const provider
+            of providers
+        ){
+
+            try{
+
+                loaderMessage(
+                    "Starting ONNX backend: " +
+                    provider
+                );
+
+                session =
+                    await ort.InferenceSession.create(
+                        CONFIG.MODEL_URL,
+                        {
+                            executionProviders:[
+                                provider
+                            ],
+
+                            graphOptimizationLevel:
+                                "all"
+                        }
+                    );
+
+                document.getElementById(
+                    "sysBackend"
+                ).textContent =
+                    provider.toUpperCase();
+
+                break;
+
+            }catch(
+                error
+            ){
+
+                console.warn(
+                    provider,
+                    error
+                );
+
+                session =
+                    null;
+
+            }
+
+        }
+
+        if(
+            !session
+        ){
+
+            throw new Error(
+                "No ONNX backend available"
+            );
+
+        }
+
+        document.getElementById(
+            "sysModel"
+        ).textContent =
+            "YOLOv8n";
+
+        document.getElementById(
+            "modelStatus"
+        ).textContent =
+            "MODEL READY";
+
+        loaderMessage(
+            "Neural network ready."
+        );
+
+        setStatus(
+            "MODEL READY",
+            "ready"
+        );
+
+        setTimeout(
+            () => {
+
+                if(
+                    !running
+                ){
+
+                    loader.classList.remove(
+                        "hidden"
+                    );
+
+                }
+
+            },
+            300
+        );
+
+    }catch(error){
+
+        console.error(
+            error
+        );
+
+        setStatus(
+            "MODEL ERROR",
+            "error"
+        );
+
+        document.getElementById(
+            "sysStatus"
+        ).textContent =
+            "Model error";
+
+        document.getElementById(
+            "sysStatus"
+        ).className =
+            "system-value bad";
+
+        loaderMessage(
+            "Model failed to load. Check internet connection and reload."
+        );
+
+    }
+
+}
+
+
+/* =========================
+   CAMERA
+========================= */
+
+async function startCamera(){
+
+    if(
+        !session
+    ){
+
+        loader.classList.remove(
+            "hidden"
+        );
+
+        loaderMessage(
+            "AI model is not ready."
+        );
+
+        return;
+
+    }
+
+    try{
+
+        stopCamera();
+
+        loader.classList.remove(
+            "hidden"
+        );
+
+        loaderMessage(
+            "Starting camera..."
+        );
+
+        stream =
+            await navigator.mediaDevices.getUserMedia({
+
+                video:{
+                    facingMode:
+                        cameraFacing,
+
+                    width:{
+                        ideal:1280
+                    },
+
+                    height:{
+                        ideal:720
+                    },
+
+                    frameRate:{
+                        ideal:30,
+
+                        max:30
+                    }
+                },
+
+                audio:false
+
+            });
+
+        video.srcObject =
+            stream;
+
+        await video.play();
+
+        running =
+            true;
+
+        paused =
+            false;
+
+        document.getElementById(
+            "cameraStatus"
+        ).textContent =
+            "CAMERA ONLINE";
+
+        document.getElementById(
+            "modelStatus"
+        ).textContent =
+            "MODEL ONLINE";
+
+        document.getElementById(
+            "sysCamera"
+        ).textContent =
+            "Online";
+
+        document.getElementById(
+            "sysCamera"
+        ).className =
+            "system-value good";
+
+        document.getElementById(
+            "sysStatus"
+        ).textContent =
+            "Running";
+
+        document.getElementById(
+            "sysStatus"
+        ).className =
+            "system-value good";
+
+        loader.classList.add(
+            "hidden"
+        );
+
+        setStatus(
+            "AI ONLINE",
+            "ready"
+        );
+
+        resizeCanvas();
+
+        requestAnimationFrame(
+            detectionLoop
+        );
+
+    }catch(error){
+
+        console.error(
+            error
+        );
+
+        running =
+            false;
+
+        setStatus(
+            "CAMERA ERROR",
+            "error"
+        );
+
+        document.getElementById(
+            "cameraStatus"
+        ).textContent =
+            "CAMERA ERROR";
+
+        loader.classList.remove(
+            "hidden"
+        );
+
+        loaderMessage(
+            "Camera permission was denied or camera is unavailable."
+        );
+
+    }
+
+}
+
+
+/* =========================
+   STOP CAMERA
+========================= */
+
+function stopCamera(){
+
+    running =
+        false;
+
+    processing =
+        false;
+
+    if(
+        stream
+    ){
+
+        stream.getTracks().forEach(
+            track => track.stop()
+        );
+
+        stream =
+            null;
+
+    }
+
+    video.srcObject =
+        null;
+
+    document.getElementById(
+        "cameraStatus"
+    ).textContent =
+        "CAMERA OFF";
+
+    document.getElementById(
+        "sysCamera"
+    ).textContent =
+        "Offline";
+
+    document.getElementById(
+        "sysCamera"
+    ).className =
+        "system-value";
+
+    clearOverlay();
+
+}
+
+
+/* =========================
+   RESIZE
+========================= */
+
+function resizeCanvas(){
+
+    if(
+        !video.videoWidth ||
+        !video.videoHeight
+    ){
+
+        return;
+
+    }
+
+    canvas.width =
+        video.videoWidth;
+
+    canvas.height =
+        video.videoHeight;
+
+}
+
+
+/* =========================
+   LETTERBOX
+========================= */
+
+function prepareInput(){
+
+    const w =
+        video.videoWidth;
+
+    const h =
+        video.videoHeight;
+
+    if(
+        !w ||
+        !h
+    ){
+
+        return null;
+
+    }
+
+    inputCanvas.width =
+        inputSize;
+
+    inputCanvas.height =
+        inputSize;
+
+    inputCtx.fillStyle =
+        "#000";
+
+    inputCtx.fillRect(
+        0,
+        0,
+        inputSize,
+        inputSize
+    );
+
+    const scale =
+        Math.min(
+            inputSize / w,
+            inputSize / h
+        );
+
+    const newW =
+        Math.round(
+            w * scale
+        );
+
+    const newH =
+        Math.round(
+            h * scale
+        );
+
+    const offsetX =
+        Math.floor(
+            (inputSize - newW) / 2
+        );
+
+    const offsetY =
+        Math.floor(
+            (inputSize - newH) / 2
+        );
+
+    inputCtx.drawImage(
+        video,
+        0,
+        0,
+        w,
+        h,
+        offsetX,
+        offsetY,
+        newW,
+        newH
+    );
+
+    const imageData =
+        inputCtx.getImageData(
+            0,
+            0,
+            inputSize,
+            inputSize
+        );
+
+    const data =
+        new Float32Array(
+            3 *
+            inputSize *
+            inputSize
+        );
+
+    const plane =
+        inputSize *
+        inputSize;
+
+    let r =
+        0;
+
+    let g =
+        plane;
+
+    let b =
+        plane * 2;
+
+    for(
+        let i=0;
+        i<imageData.data.length;
+        i+=4
+    ){
+
+        data[r++] =
+            imageData.data[i] / 255;
+
+        data[g++] =
+            imageData.data[i+1] / 255;
+
+        data[b++] =
+            imageData.data[i+2] / 255;
+
+    }
+
+    return {
+        tensor:
+            new ort.Tensor(
+                "float32",
+                data,
+                [
+                    1,
+                    3,
+                    inputSize,
+                    inputSize
+                ]
+            ),
+
+        scale,
+        offsetX,
+        offsetY,
+        sourceWidth:w,
+        sourceHeight:h
+
+    };
+
+}
+
+
+/* =========================
+   IOU
+========================= */
+
+function boxIOU(
+    a,
+    b
+){
+
+    const x1 =
+        Math.max(
+            a.x1,
+            b.x1
+        );
+
+    const y1 =
+        Math.max(
+            a.y1,
+            b.y1
+        );
+
+    const x2 =
+        Math.min(
+            a.x2,
+            b.x2
+        );
+
+    const y2 =
+        Math.min(
+            a.y2,
+            b.y2
+        );
+
+    const w =
+        Math.max(
+            0,
+            x2-x1
+        );
+
+    const h =
+        Math.max(
+            0,
+            y2-y1
+        );
+
+    const intersection =
+        w*h;
+
+    const areaA =
+        Math.max(
+            0,
+            a.x2-a.x1
+        ) *
+        Math.max(
+            0,
+            a.y2-a.y1
+        );
+
+    const areaB =
+        Math.max(
+            0,
+            b.x2-b.x1
+        ) *
+        Math.max(
+            0,
+            b.y2-b.y1
+        );
+
+    return intersection /
+        (
+            areaA +
+            areaB -
+            intersection +
+            1e-6
+        );
+
+}
+
+
+/* =========================
+   NMS
+========================= */
+
+function nms(
+    detections
+){
+
+    detections.sort(
+        (
+            a,
+            b
+        ) =>
+            b.score -
+            a.score
+    );
+
+    const result = [];
+
+    while(
+        detections.length
+    ){
+
+        const current =
+            detections.shift();
+
+        result.push(
+            current
+        );
+
+        if(
+            result.length >=
+            CONFIG.MAX_DETECTIONS
+        ){
+
+            break;
+
+        }
+
+        detections =
+            detections.filter(
+                item => {
+
+                    if(
+                        item.classId !==
+                        current.classId
+                    ){
+
+                        return true;
+
+                    }
+
+                    return (
+                        boxIOU(
+                            current,
+                            item
+                        ) <
+                        CONFIG.IOU
+                    );
+
+                }
+            );
+
+    }
+
+    return result;
+
+}
+
+
+/* =========================
+   YOLO OUTPUT PARSER
+========================= */
+
+function parseYOLO(
+    output,
+    prep
+){
+
+    const data =
+        output.data;
+
+    const dims =
+        output.dims;
+
+    /*
+     * YOLOv8 ONNX usually:
+     *
+     * [1,84,8400]
+     *
+     * 4 box values
+     * + 80 classes
+     */
+
+    let channels;
+    let count;
+    let transposed =
+        false;
+
+    if(
+        dims.length === 3
+    ){
+
+        if(
+            dims[1] <
+            dims[2]
+        ){
+
+            channels =
+                dims[1];
+
+            count =
+                dims[2];
+
+            transposed =
+                false;
+
+        }else{
+
+            count =
+                dims[1];
+
+            channels =
+                dims[2];
+
+            transposed =
+                true;
+
+        }
+
+    }else{
+
+        throw new Error(
+            "Unsupported YOLO output shape"
+        );
+
+    }
+
+    const detections = [];
+
+    for(
+        let i=0;
+        i<count;
+        i++
+    ){
+
+        let cx;
+        let cy;
+        let w;
+        let h;
+
+        if(
+            !transposed
+        ){
+
+            cx =
+                data[
+                    i
+                ];
+
+            cy =
+                data[
+                    count + i
+                ];
+
+            w =
+                data[
+                    count*2 + i
+                ];
+
+            h =
+                data[
+                    count*3 + i
+                ];
+
+        }else{
+
+            const base =
+                i * channels;
+
+            cx =
+                data[
+                    base
+                ];
+
+            cy =
+                data[
+                    base+1
+                ];
+
+            w =
+                data[
+                    base+2
+                ];
+
+            h =
+                data[
+                    base+3
+                ];
+
+        }
+
+        let bestClass =
+            -1;
+
+        let bestScore =
+            0;
+
+        for(
+            let c=4;
+            c<channels;
+            c++
+        ){
+
+            const score =
+                transposed
+                ?
+                data[
+                    i*channels+c
+                ]
+                :
+                data[
+                    c*count+i
+                ];
+
+            if(
+                score >
+                bestScore
+            ){
+
+                bestScore =
+                    score;
+
+                bestClass =
+                    c-4;
+
+            }
+
+        }
+
+        if(
+            bestScore <
+            CONFIG.CONFIDENCE
+        ){
+
+            continue;
+
+        }
+
+        let x1 =
+            cx -
+            w/2;
+
+        let y1 =
+            cy -
+            h/2;
+
+        let x2 =
+            cx +
+            w/2;
+
+        let y2 =
+            cy +
+            h/2;
+
+        /*
+         * Remove letterbox.
+         */
+
+        x1 =
+            (
+                x1 -
+                prep.offsetX
+            ) /
+            prep.scale;
+
+        y1 =
+            (
+                y1 -
+                prep.offsetY
+            ) /
+            prep.scale;
+
+        x2 =
+            (
+                x2 -
+                prep.offsetX
+            ) /
+            prep.scale;
+
+        y2 =
+            (
+                y2 -
+                prep.offsetY
+            ) /
+            prep.scale;
+
+        x1 =
+            Math.max(
+                0,
+                Math.min(
+                    prep.sourceWidth,
+                    x1
+                )
+            );
+
+        y1 =
+            Math.max(
+                0,
+                Math.min(
+                    prep.sourceHeight,
+                    y1
+                )
+            );
+
+        x2 =
+            Math.max(
+                0,
+                Math.min(
+                    prep.sourceWidth,
+                    x2
+                )
+            );
+
+        y2 =
+            Math.max(
+                0,
+                Math.min(
+                    prep.sourceHeight,
+                    y2
+                )
+            );
+
+        if(
+            x2 <= x1 ||
+            y2 <= y1
+        ){
+
+            continue;
+
+        }
+
+        detections.push({
+
+            classId:
+                bestClass,
+
+            name:
+                CLASSES[
+                    bestClass
+                ] ||
+                "object",
+
+            score:
+                bestScore,
+
+            x1,
+            y1,
+            x2,
+            y2
+
+        });
+
+    }
+
+    return nms(
+        detections
+    );
+
+}
+
+
+/* =========================
+   INFERENCE
+========================= */
+
+async function detect(){
+
+    if(
+        !session ||
+        !running ||
+        paused ||
+        processing ||
+        video.readyState <
+        2
+    ){
+
+        return;
+
+    }
+
+    processing =
+        true;
+
+    const start =
+        performance.now();
+
+    try{
+
+        const prep =
+            prepareInput();
+
+        if(
+            !prep
+        ){
+
+            return;
+
+        }
+
+        const inputName =
+            session.inputNames[0];
+
+        const feeds = {};
+
+        feeds[
+            inputName
+        ] =
+            prep.tensor;
+
+        const results =
+            await session.run(
+                feeds
+            );
+
+        const outputName =
+            session.outputNames[0];
+
+        const detections =
+            parseYOLO(
+                results[
+                    outputName
+                ],
+                prep
+            );
+
+        lastDetections =
+            detections;
+
+        lastInferenceTime =
+            performance.now() -
+            start;
+
+        inferenceCounter++;
+
+        drawDetections(
+            detections
+        );
+
+        updateObjects(
+            detections
+        );
+
+        document.getElementById(
+            "inference"
+        ).textContent =
+            Math.round(
+                lastInferenceTime
+            );
+
+        document.getElementById(
+            "objectCount"
+        ).textContent =
+            detections.length;
+
+        document.getElementById(
+            "objectState"
+        ).textContent =
+            detections.length
+            ?
+            "TRACKING"
+            :
+            "CLEAR";
+
+        if(
+            detections.length
+        ){
+
+            document.getElementById(
+                "objectState"
+            ).className =
+                "panel-state good";
+
+        }else{
+
+            document.getElementById(
+                "objectState"
+            ).className =
+                "panel-state";
+
+        }
+
+    }catch(error){
+
+        console.error(
+            "Detection error:",
+            error
+        );
+
+        document.getElementById(
+            "sysStatus"
+        ).textContent =
+            "Detection error";
+
+        document.getElementById(
+            "sysStatus"
+        ).className =
+            "system-value bad";
+
+    }finally{
+
+        processing =
+            false;
+
+    }
+
+}
+
+
+/* =========================
+   DETECTION LOOP
+========================= */
+
+function detectionLoop(
+    now
+){
+
+    if(
+        !running
+    ){
+
+        return;
+
+    }
+
+    const interval =
+        1000 /
+        aiTargetFps;
+
+    if(
+        !paused &&
+        !processing &&
+        now -
+        lastFrameTime >=
+        interval
+    ){
+
+        lastFrameTime =
+            now;
+
+        detect();
+
+    }
+
+    requestAnimationFrame(
+        detectionLoop
+    );
+
+}
+
+
+/* =========================
+   DRAW DETECTIONS
+========================= */
+
+function drawDetections(
+    detections
+){
+
+    if(
+        canvas.width !==
+        video.videoWidth ||
+        canvas.height !==
+        video.videoHeight
+    ){
+
+        resizeCanvas();
+
+    }
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    const scaleX =
+        canvas.width /
+        video.videoWidth;
+
+    const scaleY =
+        canvas.height /
+        video.videoHeight;
+
+    ctx.lineWidth =
+        Math.max(
+            2,
+            canvas.width /
+            500
+        );
+
+    ctx.font =
+        "bold " +
+        Math.max(
+            11,
+            canvas.width /
+            70
+        ) +
+        "px Arial";
+
+    detections.forEach(
+        (d,index) => {
+
+            const x =
+                d.x1 *
+                scaleX;
+
+            const y =
+                d.y1 *
+                scaleY;
+
+            const w =
+                (
+                    d.x2 -
+                    d.x1
+                ) *
+                scaleX;
+
+            const h =
+                (
+                    d.y2 -
+                    d.y1
+                ) *
+                scaleY;
+
+            ctx.strokeStyle =
+                "#55cfff";
+
+            ctx.shadowColor =
+                "rgba(80,210,255,.65)";
+
+            ctx.shadowBlur =
+                8;
+
+            ctx.strokeRect(
+                x,
+                y,
+                w,
+                h
+            );
+
+            ctx.shadowBlur =
+                0;
+
+            const label =
+                d.name +
+                " " +
+                Math.round(
+                    d.score *
+                    100
+                ) +
+                "%";
+
+            const textWidth =
+                ctx.measureText(
+                    label
+                ).width;
+
+            const labelHeight =
+                22;
+
+            ctx.fillStyle =
+                "rgba(1,12,20,.86)";
+
+            ctx.fillRect(
+                x,
+                Math.max(
+                    0,
+                    y -
+                    labelHeight
+                ),
+                textWidth +
+                12,
+                labelHeight
+            );
+
+            ctx.fillStyle =
+                "#dff8ff";
+
+            ctx.fillText(
+                label,
+                x+6,
+                Math.max(
+                    15,
+                    y-7
+                )
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================
+   OBJECT LIST
+========================= */
+
+function updateObjects(
+    detections
+){
+
+    if(
+        !detections.length
+    ){
+
+        objectsEl.innerHTML =
+            '<div class="empty">' +
+            'No objects detected' +
+            '</div>';
+
+        return;
+
+    }
+
+    const fragment =
+        document.createDocumentFragment();
+
+    detections.forEach(
+        (
+            d,
+            index
+        ) => {
+
+            const row =
+                document.createElement(
+                    "div"
+                );
+
+            row.className =
+                "object";
+
+            const left =
+                document.createElement(
+                    "div"
+                );
+
+            left.className =
+                "object-left";
+
+            const id =
+                document.createElement(
+                    "span"
+                );
+
+            id.className =
+                "object-index";
+
+            id.textContent =
+                "#" +
+                String(
+                    index+1
+                ).padStart(
+                    2,
+                    "0"
+                );
+
+            const name =
+                document.createElement(
+                    "span"
+                );
+
+            name.className =
+                "object-name";
+
+            name.textContent =
+                d.name;
+
+            const score =
+                document.createElement(
+                    "span"
+                );
+
+            score.className =
+                "object-score";
+
+            score.textContent =
+                Math.round(
+                    d.score *
+                    100
+                ) +
+                "%";
+
+            left.appendChild(
+                id
+            );
+
+            left.appendChild(
+                name
+            );
+
+            row.appendChild(
+                left
+            );
+
+            row.appendChild(
+                score
+            );
+
+            fragment.appendChild(
+                row
+            );
+
+        }
+    );
+
+    objectsEl.replaceChildren(
+        fragment
+    );
+
+}
+
+
+/* =========================
+   CLEAR OVERLAY
+========================= */
+
+function clearOverlay(){
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    lastDetections =
+        [];
+
+    updateObjects(
+        []
+    );
+
+    document.getElementById(
+        "objectCount"
+    ).textContent =
+        "0";
+
+}
+
+
+/* =========================
+   MIRROR
+========================= */
+
+function updateMirror(){
+
+    camera.classList.toggle(
+        "mirror",
+        mirror
+    );
+
+    document.getElementById(
+        "flipBtn"
+    ).classList.toggle(
+        "active",
+        mirror
+    );
+
+}
+
+
+/* =========================
+   FPS
+========================= */
+
+function updateFPS(){
+
+    const now =
+        performance.now();
+
+    frameCounter++;
+
+    if(
+        now -
+        fpsTimer >=
+        1000
+    ){
+
+        fps =
+            frameCounter;
+
+        frameCounter =
+            0;
+
+        fpsTimer =
+            now;
+
+        document.getElementById(
+            "fps"
+        ).textContent =
+            fps;
+
+    }
+
+}
+
+
+/* =========================
+   AI FPS
+========================= */
+
+function updateAIFPS(){
+
+    const now =
+        performance.now();
+
+    if(
+        now -
+        aiFpsTimer >=
+        1000
+    ){
+
+        aiFps =
+            inferenceCounter;
+
+        inferenceCounter =
+            0;
+
+        aiFpsTimer =
+            now;
+
+        document.getElementById(
+            "aiFps"
+        ).textContent =
+            aiFps;
+
+        adaptivePerformance();
+
+    }
+
+}
+
+
+/* =========================
+   ADAPTIVE PERFORMANCE
+========================= */
+
+function adaptivePerformance(){
+
+    if(
+        !CONFIG.ADAPTIVE
+    ){
+
+        return;
+
+    }
+
+    const latency =
+        lastInferenceTime;
+
+    adaptiveTimer++;
+
+    /*
+     * If inference becomes slow,
+     * lower AI FPS first.
+     */
+
+    if(
+        latency > 130
+    ){
+
+        aiTargetFps =
+            Math.max(
+                CONFIG.MIN_AI_FPS,
+                aiTargetFps - 1
+            );
+
+    }else if(
+        latency < 60 &&
+        aiTargetFps <
+        CONFIG.MAX_AI_FPS
+    ){
+
+        aiTargetFps =
+            Math.min(
+                CONFIG.MAX_AI_FPS,
+                aiTargetFps + 1
+            );
+
+    }
+
+    /*
+     * If extremely slow,
+     * lower model input resolution.
+     */
+
+    if(
+        latency > 220 &&
+        inputSize >
+        CONFIG.MIN_INPUT
+    ){
+
+        inputSize =
+            Math.max(
+                CONFIG.MIN_INPUT,
+                inputSize - 64
+            );
+
+    }
+
+    /*
+     * If device becomes fast again,
+     * increase resolution carefully.
+     */
+
+    if(
+        latency < 70 &&
+        inputSize <
+        CONFIG.MAX_INPUT &&
+        adaptiveTimer % 4 === 0
+    ){
+
+        inputSize =
+            Math.min(
+                CONFIG.MAX_INPUT,
+                inputSize + 32
+            );
+
+    }
+
+    document.getElementById(
+        "inputSize"
+    ).textContent =
+        inputSize;
+
+    document.getElementById(
+        "performanceState"
+    ).textContent =
+        aiTargetFps +
+        " AI FPS";
+
+}
+
+
+/* =========================
+   PERFORMANCE GRAPH
+========================= */
+
+function graphLoop(){
+
+    const value =
+        Math.min(
+            100,
+            lastInferenceTime
+        );
+
+    performanceHistory.push(
+        value
+    );
+
+    if(
+        performanceHistory.length >
+        80
+    ){
+
+        performanceHistory.shift();
+
+    }
+
+    drawGraph();
+
+    requestAnimationFrame(
+        graphLoop
+    );
+
+}
+
+
+function drawGraph(){
+
+    const rect =
+        graphCanvas.getBoundingClientRect();
+
+    const dpr =
+        window.devicePixelRatio ||
+        1;
+
+    const width =
+        Math.max(
+            1,
+            Math.floor(
+                rect.width *
+                dpr
+            )
+        );
+
+    const height =
+        Math.max(
+            1,
+            Math.floor(
+                rect.height *
+                dpr
+            )
+        );
+
+    if(
+        graphCanvas.width !==
+        width ||
+        graphCanvas.height !==
+        height
+    ){
+
+        graphCanvas.width =
+            width;
+
+        graphCanvas.height =
+            height;
+
+    }
+
+    graphCtx.clearRect(
+        0,
+        0,
+        width,
+        height
+    );
+
+    graphCtx.lineWidth =
+        1;
+
+    graphCtx.strokeStyle =
+        "rgba(80,190,255,.12)";
+
+    for(
+        let i=1;
+        i<5;
+        i++
+    ){
+
+        const y =
+            height *
+            i /
+            5;
+
+        graphCtx.beginPath();
+
+        graphCtx.moveTo(
+            0,
+            y
+        );
+
+        graphCtx.lineTo(
+            width,
+            y
+        );
+
+        graphCtx.stroke();
+
+    }
+
+    if(
+        performanceHistory.length <
+        2
+    ){
+
+        return;
+
+    }
+
+    graphCtx.beginPath();
+
+    performanceHistory.forEach(
+        (
+            value,
+            index
+        ) => {
+
+            const x =
+                index /
+                (
+                    performanceHistory.length-1
+                ) *
+                width;
+
+            const y =
+                height -
+                (
+                    value /
+                    250
+                ) *
+                height;
+
+            if(
+                index === 0
+            ){
+
+                graphCtx.moveTo(
+                    x,
+                    y
+                );
+
+            }else{
+
+                graphCtx.lineTo(
+                    x,
+                    y
+                );
+
+            }
+
+        }
+    );
+
+    graphCtx.strokeStyle =
+        "#54cfff";
+
+    graphCtx.lineWidth =
+        2;
+
+    graphCtx.stroke();
+
+}
+
+
+/* =========================
+   MAIN FPS LOOP
+========================= */
+
+function mainLoop(){
+
+    if(
+        running &&
+        !paused
+    ){
+
+        updateFPS();
+
+        updateAIFPS();
+
+    }
+
+    requestAnimationFrame(
+        mainLoop
+    );
+
+}
+
+
+/* =========================
+   CONFIDENCE
+========================= */
+
+document.getElementById(
+    "confidence"
+).textContent =
+    Math.round(
+        CONFIG.CONFIDENCE *
+        100
+    );
+
+
+/* =========================
+   BUTTONS
+========================= */
+
+document.getElementById(
+    "startBtn"
+).addEventListener(
+    "click",
+    startCamera
+);
+
+
+document.getElementById(
+    "stopBtn"
+).addEventListener(
+    "click",
+    () => {
+
+        stopCamera();
+
+        loader.classList.remove(
+            "hidden"
+        );
+
+        loaderMessage(
+            "Camera stopped."
+        );
+
+        setStatus(
+            "READY"
+        );
+
+        document.getElementById(
+            "sysStatus"
+        ).textContent =
+            "Ready";
+
+        document.getElementById(
+            "sysStatus"
+        ).className =
+            "system-value";
+
+    }
+);
+
+
+document.getElementById(
+    "pauseBtn"
+).addEventListener(
+    "click",
+    () => {
+
+        paused =
+            !paused;
+
+        const button =
+            document.getElementById(
+                "pauseBtn"
+            );
+
+        button.textContent =
+            paused
+            ?
+            "RESUME AI"
+            :
+            "PAUSE AI";
+
+        button.classList.toggle(
+            "active",
+            paused
+        );
+
+        if(
+            paused
+        ){
+
+            setStatus(
+                "AI PAUSED"
+            );
+
+        }else{
+
+            setStatus(
+                "AI ONLINE",
+                "ready"
+            );
+
+        }
+
+    }
+);
+
+
+document.getElementById(
+    "flipBtn"
+).addEventListener(
+    "click",
+    async () => {
+
+        mirror =
+            !mirror;
+
+        updateMirror();
+
+    }
+);
+
+
+/* =========================
+   VISIBILITY
+========================= */
+
+document.addEventListener(
+    "visibilitychange",
+    () => {
+
+        /*
+         * Do not run expensive AI
+         * while the page is hidden.
+         */
+
+        if(
+            document.hidden
+        ){
+
+            paused =
+                true;
+
+        }else if(
+            running
+        ){
+
+            paused =
+                false;
+
+        }
+
+    }
+);
+
+
+/* =========================
+   RESIZE
+========================= */
+
+window.addEventListener(
+    "resize",
+    () => {
+
+        resizeCanvas();
+
+    }
+);
+
+
+/* =========================
+   PAGE LOAD
+========================= */
+
+document.getElementById(
+    "sysDevice"
+).textContent =
+    navigator.userAgent.includes(
+        "Android"
+    )
+    ?
+    "Android"
+    :
+    navigator.platform;
+
+
+updateMirror();
+
+graphLoop();
+
+mainLoop();
+
+loadModel();
+
+</script>
+
+</body>
+</html>
