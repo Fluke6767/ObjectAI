@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h2>YOLO Model Test</h2>
+<pre id="out">Loading...</pre>
+
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.29.0/dist/ort.min.js"></script>
+
+<script>
+(async () => {
+    const out = document.getElementById("out");
+
+    try {
+        const session = await ort.InferenceSession.create(
+            "./models/yolo26n.onnx",
+            {
+                executionProviders: ["wasm"]
+            }
+        );
+
+        const input = new Float32Array(1 * 3 * 640 * 640);
+
+        const tensor = new ort.Tensor(
+            "float32",
+            input,
+            [1, 3, 640, 640]
+        );
+
+        const results = await session.run({
+            images: tensor
+        });
+
+        const output = results[session.outputNames[0]];
+
+        out.textContent =
+            "MODEL LOAD OK\n\n" +
+            "Input:\n" +
+            session.inputNames.join("\n") +
+            "\n\nOutput:\n" +
+            session.outputNames.join("\n") +
+            "\n\nOutput shape:\n" +
+            JSON.stringify(output.dims) +
+            "\n\nOutput size:\n" +
+            output.data.length;
+    } catch (e) {
+        out.textContent =
+            "MODEL TEST FAILED\n\n" +
+            (e.stack || e.message || String(e));
+    }
+})();
+</script>
+</body>
+</html>

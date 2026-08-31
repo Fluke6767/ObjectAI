@@ -6,7 +6,7 @@
 
 <title>OBJECT AI · JARVIS</title>
 
-<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/ort.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.29.0/dist/ort.min.js"></script>
 
 <style>
 *{
@@ -1252,7 +1252,7 @@ button.danger{
 const CONFIG = {
 
     MODEL_URL:
-        "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n.onnx",
+        "./models/yolo26n.onnx",
 
     INPUT_SIZE:
         640,
@@ -2227,216 +2227,105 @@ function parseYOLO(
         output.dims;
 
     /*
-     * YOLOv8 ONNX usually:
+     * YOLO26 ONNX output:
      *
-     * [1,84,8400]
+     * [1, 300, 6]
      *
-     * 4 box values
-     * + 80 classes
+     * Each detection:
+     *
+     * [x1, y1, x2, y2, confidence, classId]
      */
 
-    let channels;
-    let count;
-    let transposed =
-        false;
-
     if(
-        dims.length === 3
+        dims.length !== 3 ||
+        dims[0] !== 1 ||
+        dims[2] !== 6
     ){
 
-        if(
-            dims[1] <
-            dims[2]
-        ){
-
-            channels =
-                dims[1];
-
-            count =
-                dims[2];
-
-            transposed =
-                false;
-
-        }else{
-
-            count =
-                dims[1];
-
-            channels =
-                dims[2];
-
-            transposed =
-                true;
-
-        }
-
-    }else{
-
         throw new Error(
-            "Unsupported YOLO output shape"
+            "Unsupported YOLO26 output shape: " +
+            JSON.stringify(dims)
         );
 
     }
 
+    const count =
+        dims[1];
+
     const detections = [];
 
     for(
-        let i=0;
-        i<count;
+        let i = 0;
+        i < count;
         i++
     ){
 
-        let cx;
-        let cy;
-        let w;
-        let h;
+        const base =
+            i * 6;
+
+        let x1 =
+            data[base];
+
+        let y1 =
+            data[base + 1];
+
+        let x2 =
+            data[base + 2];
+
+        let y2 =
+            data[base + 3];
+
+        const score =
+            data[base + 4];
+
+        const classId =
+            Math.round(
+                data[base + 5]
+            );
 
         if(
-            !transposed
-        ){
-
-            cx =
-                data[
-                    i
-                ];
-
-            cy =
-                data[
-                    count + i
-                ];
-
-            w =
-                data[
-                    count*2 + i
-                ];
-
-            h =
-                data[
-                    count*3 + i
-                ];
-
-        }else{
-
-            const base =
-                i * channels;
-
-            cx =
-                data[
-                    base
-                ];
-
-            cy =
-                data[
-                    base+1
-                ];
-
-            w =
-                data[
-                    base+2
-                ];
-
-            h =
-                data[
-                    base+3
-                ];
-
-        }
-
-        let bestClass =
-            -1;
-
-        let bestScore =
-            0;
-
-        for(
-            let c=4;
-            c<channels;
-            c++
-        ){
-
-            const score =
-                transposed
-                ?
-                data[
-                    i*channels+c
-                ]
-                :
-                data[
-                    c*count+i
-                ];
-
-            if(
-                score >
-                bestScore
-            ){
-
-                bestScore =
-                    score;
-
-                bestClass =
-                    c-4;
-
-            }
-
-        }
-
-        if(
-            bestScore <
-            CONFIG.CONFIDENCE
+            !Number.isFinite(score) ||
+            score < CONFIG.CONFIDENCE
         ){
 
             continue;
 
         }
 
-        let x1 =
-            cx -
-            w/2;
+        if(
+            !Number.isFinite(x1) ||
+            !Number.isFinite(y1) ||
+            !Number.isFinite(x2) ||
+            !Number.isFinite(y2)
+        ){
 
-        let y1 =
-            cy -
-            h/2;
+            continue;
 
-        let x2 =
-            cx +
-            w/2;
-
-        let y2 =
-            cy +
-            h/2;
+        }
 
         /*
-         * Remove letterbox.
+         * Remove letterbox transformation.
          */
 
         x1 =
-            (
-                x1 -
-                prep.offsetX
-            ) /
+            (x1 - prep.offsetX) /
             prep.scale;
 
         y1 =
-            (
-                y1 -
-                prep.offsetY
-            ) /
+            (y1 - prep.offsetY) /
             prep.scale;
 
         x2 =
-            (
-                x2 -
-                prep.offsetX
-            ) /
+            (x2 - prep.offsetX) /
             prep.scale;
 
         y2 =
-            (
-                y2 -
-                prep.offsetY
-            ) /
+            (y2 - prep.offsetY) /
             prep.scale;
+
+        /*
+         * Clamp to source image.
+         */
 
         x1 =
             Math.max(
@@ -2486,21 +2375,26 @@ function parseYOLO(
         detections.push({
 
             classId:
-                bestClass,
+                classId,
 
             name:
-                CLASSES[
-                    bestClass
-                ] ||
+                CLASSES[classId] ||
                 "object",
 
             score:
-                bestScore,
+                score,
 
-            x1,
-            y1,
-            x2,
-            y2
+            x1:
+                x1,
+
+            y1:
+                y1,
+
+            x2:
+                x2,
+
+            y2:
+                y2
 
         });
 
@@ -2511,8 +2405,6 @@ function parseYOLO(
     );
 
 }
-
-
 /* =========================
    INFERENCE
 ========================= */
@@ -2567,6 +2459,7 @@ async function detect(){
             );
 
         const outputName =
+        console.log("YOLO OUTPUT:", results[outputName].dims);
             session.outputNames[0];
 
         const detections =
